@@ -1,0 +1,5 @@
+.env
+.env.*
+generations/
+site/*/assets/*.tmp
+__pycache__/
