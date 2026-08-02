@@ -1,5 +1,5 @@
 .env
 .env.*
+env.txt
 generations/
-site/*/assets/*.tmp
 __pycache__/

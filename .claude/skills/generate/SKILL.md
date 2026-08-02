@@ -130,9 +130,14 @@ folder search) can recover exactly how any file was made.
   tool that reads the library.
 - **One at a time.** Sequential API calls; no parallel paid jobs.
 - **Log every prompt.** Sidecar JSON after every save.
-- Keys live in `.env` / environment variables (`KIE_API_KEY`, `FAL_KEY`,
-  `WAVESPEED_API_KEY`, `GEMINI_API_KEY`) — read them from there, never paste
-  into code, never commit them.
+- Keys live in a `.env` file (`GEMINI_API_KEY`, `KIE_API_KEY`, `FAL_KEY`,
+  `WAVESPEED_API_KEY`). The scripts load it automatically from the working
+  folder or any parent — `env.txt` also works, since saving a dot-file is
+  awkward in Finder. Real environment variables win over the file, and
+  untouched template values (`pega_tu_clave_aqui`) count as missing. Never
+  paste keys into code, never commit them, never print them.
+  `generate_image.py --check-keys` shows which file was found and which
+  keys are set — run it first whenever a generation fails with 401.
 - Ballpark costs (verify on pricing pages before relying on them):
   draft image $0.01–0.03 · quality image $0.05–0.15 · video $0.20–0.35
   **per second** (a 10s clip is $2–3.50 — this is why the cost gate exists).

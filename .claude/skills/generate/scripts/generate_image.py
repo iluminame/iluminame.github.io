@@ -34,6 +34,44 @@ KEYS = {
     "wavespeed": "WAVESPEED_API_KEY",
 }
 
+# Values that mean "the user hasn't pasted a real key yet"
+PLACEHOLDERS = ("pega_tu_clave", "tu_clave", "your_key", "your_api_key", "xxx")
+
+
+def load_env(start=None):
+    """Load KEY=VALUE lines from .env (or env.txt) in the cwd or a parent.
+
+    Keys live in a file rather than the shell so the workflow survives new
+    terminal windows; real environment variables always win over the file.
+    Returns (path_loaded_or_None, [keys_set]).
+    """
+    d = os.path.abspath(start or os.getcwd())
+    for _ in range(4):
+        for name in (".env", "env.txt"):
+            path = os.path.join(d, name)
+            if not os.path.isfile(path):
+                continue
+            loaded = []
+            with open(path, encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    k, v = line.split("=", 1)
+                    k, v = k.strip(), v.strip().strip('"').strip("'")
+                    if not k or not v or os.environ.get(k):
+                        continue
+                    if any(ph in v.lower() for ph in PLACEHOLDERS):
+                        continue  # still the template value
+                    os.environ[k] = v
+                    loaded.append(k)
+            return path, loaded
+        parent = os.path.dirname(d)
+        if parent == d:
+            break
+        d = parent
+    return None, []
+
 FAL_SIZES = {
     "1:1": "square_hd", "4:3": "landscape_4_3", "3:4": "portrait_4_3",
     "16:9": "landscape_16_9", "9:16": "portrait_16_9", "4:5": "portrait_4_3",
@@ -237,7 +275,9 @@ def main():
     p.add_argument("--check-keys", action="store_true")
     args = p.parse_args()
 
+    env_path, _ = load_env()
     if args.check_keys:
+        print(f"keys file: {env_path or 'none found (looked for .env / env.txt here and in parent folders)'}\n")
         for prov, var in KEYS.items():
             print(f"{prov:10s} {var:20s} {'SET' if os.environ.get(var) else 'missing'}")
         return
@@ -249,7 +289,9 @@ def main():
 
     key = os.environ.get(KEYS[args.provider], "")
     if not key and not args.dry_run:
-        sys.exit(f"Missing {KEYS[args.provider]} for provider '{args.provider}' — add it to .env / environment.")
+        where = f"in {env_path}" if env_path else "in a .env file next to your generations folder"
+        sys.exit(f"Missing {KEYS[args.provider]} for provider '{args.provider}' — set it {where}. "
+                 "Run with --check-keys to see what was found.")
 
     refs_local = [r for r in args.ref if os.path.exists(r)]
     ref_uris = [to_data_uri(r) if os.path.exists(r) else r for r in args.ref]

@@ -39,6 +39,39 @@ KEYS = {
     "wavespeed": "WAVESPEED_API_KEY",
 }
 
+PLACEHOLDERS = ("pega_tu_clave", "tu_clave", "your_key", "your_api_key", "xxx")
+
+
+def load_env(start=None):
+    """Load KEY=VALUE lines from .env (or env.txt) in the cwd or a parent.
+
+    Same loader as generate_image.py — real environment variables win over
+    the file, and template placeholder values are ignored.
+    """
+    d = os.path.abspath(start or os.getcwd())
+    for _ in range(4):
+        for name in (".env", "env.txt"):
+            path = os.path.join(d, name)
+            if not os.path.isfile(path):
+                continue
+            with open(path, encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    k, v = line.split("=", 1)
+                    k, v = k.strip(), v.strip().strip('"').strip("'")
+                    if (not k or not v or os.environ.get(k)
+                            or any(ph in v.lower() for ph in PLACEHOLDERS)):
+                        continue
+                    os.environ[k] = v
+            return path
+        parent = os.path.dirname(d)
+        if parent == d:
+            break
+        d = parent
+    return None
+
 
 def http_json(url, payload=None, headers=None, timeout=300):
     data = json.dumps(payload).encode() if payload is not None else None
@@ -100,9 +133,12 @@ def main():
 
     args.desc = slugify(args.desc or args.prompt)
     args.project = slugify(args.project)
+    env_path = load_env()
     key = os.environ.get(KEYS[args.provider], "")
     if not key and not args.dry_run:
-        sys.exit(f"Missing {KEYS[args.provider]} for provider '{args.provider}' — add it to .env / environment.")
+        where = f"in {env_path}" if env_path else "in a .env file next to your generations folder"
+        sys.exit(f"Missing {KEYS[args.provider]} for provider '{args.provider}' — set it {where}. "
+                 "Run generate_image.py --check-keys to see what was found.")
 
     ref_uris = [to_data_uri(r) if os.path.exists(r) else r for r in args.ref]
     extra = json.loads(args.input_json) if args.input_json else {}
