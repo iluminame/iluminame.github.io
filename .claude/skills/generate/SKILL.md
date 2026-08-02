@@ -139,9 +139,13 @@ folder search) can recover exactly how any file was made.
 
 ## After generating
 
-- Rebuild the gallery wall: `python3 scripts/gallery.py` writes
-  `generations/index.html` — a masonry bento wall of everything ever
-  generated (hover plays videos, click opens big). Tell the user where it is.
+- Rebuild the Generations app: `python3 scripts/gallery.py` writes
+  `generations/index.html` — a dashboard of everything ever generated:
+  search, filter tabs (All/Images/Videos/References), newest/oldest sort,
+  pagination, a Styles panel (the preset library) and a Models panel (the
+  wired recipes), masonry wall with hover-play videos, and a lightbox with
+  full metadata + copy-prompt. `--embed` makes a single portable file with
+  the media inlined (good for sharing). Tell the user where it is.
 - Offer exactly one natural next step: rerun the favourite on the quality
   model, animate the winning image into a clip, or build a landing page
   around it (`references/website.md`).
@@ -155,7 +159,7 @@ folder search) can recover exactly how any file was made.
 | `references/styles.md` | Expanding briefs into production prompts (style presets) |
 | `references/website.md` | Turning a generated image into a landing page |
 | `scripts/generate_image.py` · `scripts/generate_video.py` | All API calls (sync + async, all providers) |
-| `scripts/gallery.py` | Rebuild the gallery wall; `--stats` for spend vs. budget |
+| `scripts/gallery.py` | Rebuild the Generations dashboard app; `--embed` for a portable copy; `--stats` for spend vs. budget |
 
 In Claude.ai chat without network access: build the exact `curl` commands
 from the recipe file for the user to run locally (fallback section in

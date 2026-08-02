@@ -45,11 +45,17 @@ Agregar un modelo nuevo = agregar un archivo markdown de receta. Nada más.
 - Tope mensual en `generations/budget.json` (US$20 por defecto);
   `gallery.py --stats` muestra el gasto por mes y proveedor.
 
-### Bonus: la galería de pared
+### Bonus: la app "Generations"
 
-`python3 scripts/gallery.py` construye `generations/index.html`: una pared
-tipo bento/masonry con todo lo generado — los videos se reproducen al pasar
-el mouse, clic abre en grande, un solo archivo sin servidor.
+`python3 scripts/gallery.py` construye `generations/index.html`: un dashboard
+oscuro estilo command-center con todo lo generado — buscador, pestañas
+(All / Images / Videos / References), orden por fecha, paginación, panel de
+**Styles** (los presets disponibles) y panel de **Models** (los modelos
+cableados), muro masonry donde los videos se reproducen al pasar el mouse, y
+lightbox con el prompt completo, modelo, costo y botón de copiar. Un solo
+archivo, sin servidor. Con `--embed` genera una copia portable con las
+imágenes incrustadas — hay una demo en
+[`demo/generations-demo.html`](demo/generations-demo.html).
 
 El código está en [`.claude/skills/generate/`](.claude/skills/generate/).
 

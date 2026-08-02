@@ -1,0 +1,210 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generations</title>
+<style>
+:root{color-scheme:dark;
+  --bg:#0a0a0d;--panel:#131317;--panel2:#17171c;--line:rgba(255,255,255,.08);
+  --txt:#ececf1;--dim:#8b8b98;--acc:#ff6a2b;--acc2:#ffb182;
+  --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box;margin:0}
+html{scrollbar-color:#333 var(--bg)}
+body{background:var(--bg);color:var(--txt);font:15px/1.5 var(--sans);min-height:100vh;
+  background-image:radial-gradient(circle at 18% -8%,rgba(255,106,43,.09),transparent 45%),
+  radial-gradient(rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:100% 100%,26px 26px}
+a{color:var(--acc2)}
+header{display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:26px 30px 10px}
+.brand{font:700 19px/1 var(--mono);letter-spacing:.14em}
+.brand .dot{display:inline-block;width:9px;height:9px;background:var(--acc);
+  border-radius:2px;margin-right:10px;box-shadow:0 0 12px var(--acc);
+  animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.brand small{color:var(--dim);font-weight:400;letter-spacing:.02em;margin-left:10px}
+.hright{margin-left:auto;display:flex;gap:8px;align-items:center}
+#count{font:11px var(--mono);color:var(--dim);letter-spacing:.08em;margin-right:6px}
+.btn{font:11px var(--mono);letter-spacing:.1em;color:var(--txt);background:transparent;
+  border:1px solid var(--line);border-radius:8px;padding:8px 13px;cursor:pointer;
+  transition:.15s}
+.btn:hover{border-color:var(--acc);color:var(--acc2)}
+.btn.on{border-color:var(--acc);color:var(--acc);background:rgba(255,106,43,.08)}
+.panel{display:none;margin:10px 30px 4px;border:1px solid var(--line);
+  border-radius:14px;background:var(--panel);padding:18px;
+  animation:drop .18s ease-out}
+.panel.on{display:block}
+@keyframes drop{from{opacity:0;transform:translateY(-6px)}}
+.panel h2{font:11px var(--mono);letter-spacing:.16em;color:var(--dim);margin:0 0 12px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+.pcard{border:1px solid var(--line);border-radius:10px;background:var(--panel2);
+  padding:12px 14px;transition:.15s}
+.pcard:hover{border-color:rgba(255,106,43,.5);transform:translateY(-1px)}
+.pcard b{font:600 13.5px var(--sans);display:block;margin-bottom:3px}
+.pcard p{font-size:12px;color:var(--dim);line-height:1.45}
+.pcard .chip{display:inline-block;font:10px var(--mono);color:var(--acc2);
+  border:1px solid rgba(255,106,43,.35);border-radius:99px;padding:2px 8px;margin-top:8px}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 30px}
+#q{background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  color:var(--txt);font:13px var(--sans);padding:9px 13px;width:230px;outline:none}
+#q:focus{border-color:var(--acc)}
+.tabs{display:flex;gap:2px;border:1px solid var(--line);border-radius:9px;
+  padding:3px;background:var(--panel)}
+.tab{font:11px var(--mono);letter-spacing:.07em;color:var(--dim);background:none;
+  border:0;border-radius:6px;padding:6px 12px;cursor:pointer;transition:.15s}
+.tab:hover{color:var(--txt)}
+.tab.on{background:rgba(255,106,43,.14);color:var(--acc2)}
+#sort{margin-left:auto}
+.pager{display:flex;gap:4px}
+.pager .btn{padding:7px 10px}
+.wall{columns:4 250px;column-gap:13px;padding:8px 30px 60px}
+.tile{break-inside:avoid;margin:0 0 13px;border-radius:13px;overflow:hidden;
+  background:var(--panel);border:1px solid var(--line);cursor:zoom-in;
+  transition:transform .16s,border-color .16s,box-shadow .16s;
+  animation:up .35s ease-out backwards}
+.tile:nth-child(-n+12){animation-delay:calc(var(--i)*35ms)}
+@keyframes up{from{opacity:0;transform:translateY(10px)}}
+.tile:hover{transform:translateY(-3px);border-color:rgba(255,106,43,.55);
+  box-shadow:0 10px 28px rgba(0,0,0,.5)}
+.tile img,.tile video{width:100%;display:block;background:#000}
+.tmeta{padding:10px 12px 11px}
+.tmeta b{font:600 13px var(--sans);display:block;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.tmeta p{font-size:11.5px;color:var(--dim);line-height:1.4;max-height:2.8em;
+  overflow:hidden;margin-top:2px}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;
+  font:10px var(--mono);color:var(--dim);letter-spacing:.03em}
+.tags .cost{color:var(--acc)}
+.tags .ref{color:var(--acc2)}
+#empty{display:none;text-align:center;color:var(--dim);padding:80px 20px;
+  font:13px var(--mono);letter-spacing:.06em}
+#lb{position:fixed;inset:0;background:rgba(6,6,8,.94);display:none;z-index:9;
+  align-items:center;justify-content:center;padding:3vh 3vw;cursor:zoom-out;
+  backdrop-filter:blur(6px)}
+#lb.on{display:flex}
+.lbox{display:flex;gap:0;max-width:94vw;max-height:90vh;cursor:auto;
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  overflow:hidden;animation:drop .2s ease-out}
+.lbox .media{display:flex;align-items:center;background:#000;max-width:64vw}
+.lbox img,.lbox video{max-width:64vw;max-height:90vh;display:block}
+.lmeta{width:300px;min-width:240px;padding:20px;overflow-y:auto}
+.lmeta h3{font:11px var(--mono);letter-spacing:.16em;color:var(--dim);margin:14px 0 4px}
+.lmeta h3:first-child{margin-top:0}
+.lmeta .val{font-size:13px;word-wrap:break-word}
+.lmeta .prompt{font-size:12.5px;line-height:1.55;color:var(--txt)}
+.copy{margin-top:14px;width:100%}
+@media(max-width:760px){.lbox{flex-direction:column}.lbox .media,.lbox img,.lbox video{max-width:94vw}
+.lmeta{width:auto}}
+</style></head><body>
+<header>
+  <div class="brand"><span class="dot"></span>GENERATIONS<small>made with /generate</small></div>
+  <div class="hright">
+    <span id="count"></span>
+    <button class="btn" id="bStyles">STYLES ▾</button>
+    <button class="btn" id="bModels">MODELS ▾</button>
+  </div>
+</header>
+<section class="panel" id="pStyles"><h2>STYLE PRESETS — ask for any of these by name</h2><div class="pgrid" id="styleCards"></div></section>
+<section class="panel" id="pModels"><h2>WIRED MODELS — one recipe file each</h2><div class="pgrid" id="modelCards"></div></section>
+<div class="toolbar">
+  <input id="q" type="search" placeholder="Search prompts, models, files…">
+  <nav class="tabs" id="tabs"></nav>
+  <button class="btn" id="sort">NEWEST ↓</button>
+  <nav class="pager" id="pager"></nav>
+</div>
+<div class="wall" id="wall"></div>
+<div id="empty">NOTHING HERE YET — TYPE /generate AND ASK FOR SOMETHING</div>
+<div id="lb"></div>
+<script>
+const DATA={"items": [{"file": "refs/brand-palette.svg", "kind": "image", "section": "reference", "project": "", "mtime": 1785701622.109951, "prompt": "", "model": "", "provider": "", "style": "", "cost": null, "created": "", "params": {}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgOTAwIDMwMCI+CjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgo8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMyYjFhM2YiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwZDBkMTYiLz48L2xpbmVhckdyYWRpZW50Pgo8cmFkaWFsR3JhZGllbnQgaWQ9InIiIGN4PSIuMyIgY3k9Ii4yNSIgcj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmY4YTVjIiBzdG9wLW9wYWNpdHk9Ii45Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2ZmOGE1YyIgc3RvcC1vcGFjaXR5PSIwIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+CjxyZWN0IHdpZHRoPSI5MDAiIGhlaWdodD0iMzAwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9InVybCgjcikiLz48cmVjdCB4PSI0MCIgeT0iNjAiIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZmY4YTVjIi8+PHJlY3QgeD0iMjYwIiB5PSI2MCIgd2lkdGg9IjE4MCIgaGVpZ2h0PSIxODAiIGZpbGw9IiNlOGQ5YzgiLz48cmVjdCB4PSI0ODAiIHk9IjYwIiB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iIzJiMWEzZiIvPjxyZWN0IHg9IjcwMCIgeT0iNjAiIHdpZHRoPSIxNjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZWNlY2YxIi8+PC9zdmc+"}, {"file": "refs/glomend-logo.svg", "kind": "image", "section": "reference", "project": "", "mtime": 1785701622.1091926, "prompt": "", "model": "", "provider": "", "style": "", "cost": null, "created": "", "params": {}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgNjAwIDYwMCI+CjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgo8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMxYzFhMTgiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwZDBjMGIiLz48L2xpbmVhckdyYWRpZW50Pgo8cmFkaWFsR3JhZGllbnQgaWQ9InIiIGN4PSIuMyIgY3k9Ii4yNSIgcj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmY4YTVjIiBzdG9wLW9wYWNpdHk9Ii45Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2ZmOGE1YyIgc3RvcC1vcGFjaXR5PSIwIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+CjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNjAwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjYwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjcikiLz48dGV4dCB4PSIzMDAiIHk9IjMzMCIgZm9udC1zaXplPSIxMTAiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZpbGw9IiNmZmIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdMTzwvdGV4dD48L3N2Zz4="}, {"file": "glomend_editorial_1785312822.svg", "kind": "image", "section": "generation", "project": "glomend", "mtime": 1785701622.1088216, "prompt": "model in flowing crimson dress, bold pose, seamless burgundy studio backdrop, hard directional flash, sharp shadows, glossy magazine editorial", "model": "gemini-3.1-flash-image-preview", "provider": "google", "style": "editorial-fashion", "cost": 0.05, "created": "2026-07-19T19:39:00", "params": {"aspect": "4:5"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MDAiIGhlaWdodD0iMTEyNSIgdmlld0JveD0iMCAwIDkwMCAxMTI1Ij4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzhhMWYyZCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzNkMGQxNCIvPjwvbGluZWFyR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0iciIgY3g9Ii4zIiBjeT0iLjI1IiByPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZmI4YzAiIHN0b3Atb3BhY2l0eT0iLjkiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmZiOGMwIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIxMTI1IiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIxMTI1IiBmaWxsPSJ1cmwoI3IpIi8+PHJlY3QgeD0iMzMwIiB5PSIyNDAiIHdpZHRoPSIyNDAiIGhlaWdodD0iNjQwIiByeD0iMTAiIGZpbGw9IiMwMDAwMDA1NSIvPjxjaXJjbGUgY3g9IjQ1MCIgY3k9IjMzMCIgcj0iOTAiIGZpbGw9IiNlOGM4YjgiLz48L3N2Zz4="}, {"file": "robo_retro-vhs_1785356022.svg", "kind": "image", "section": "generation", "project": "robo", "mtime": 1785701622.1085355, "prompt": "suburban street at dusk, 1980s VHS home-video still, scanlines and chromatic aberration, washed-out colors, timestamp in corner, nostalgic haze", "model": "gemini-3.1-flash-lite-image", "provider": "google", "style": "retro-vhs", "cost": 0.02, "created": "2026-07-20T18:28:00", "params": {"aspect": "4:3"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjkwMCIgdmlld0JveD0iMCAwIDEyMDAgOTAwIj4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzNhM2YyZSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE5MWIxNCIvPjwvbGluZWFyR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0iciIgY3g9Ii4zIiBjeT0iLjI1IiByPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNjOGQ0OGEiIHN0b3Atb3BhY2l0eT0iLjkiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjYzhkNDhhIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iOTAwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iOTAwIiBmaWxsPSJ1cmwoI3IpIi8+PHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iOCIgeT0iMTQwIiBmaWxsPSIjZmZmZmZmMjIiLz48cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2IiB5PSI0MjAiIGZpbGw9IiNmZmZmZmYxOCIvPjxyZWN0IHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjEwIiB5PSI3MDAiIGZpbGw9IiNmZmZmZmYxNCIvPjx0ZXh0IHg9IjYwIiB5PSI4NDAiIGZvbnQtc2l6ZT0iNTIiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZpbGw9IiNkN2UwYTgiPlBMQVkg4pa2IDAwOjEyOjQ3PC90ZXh0Pjwvc3ZnPg=="}, {"file": "glomend_food-macro_1785399222.svg", "kind": "image", "section": "generation", "project": "glomend", "mtime": 1785701622.1077015, "prompt": "extreme macro of golden honey drizzling over granola bowl, steam rising, glistening texture, dark moody background, single dramatic side light", "model": "gemini-3.1-flash-image-preview", "provider": "google", "style": "food-macro", "cost": 0.03, "created": "2026-07-21T17:17:00", "params": {"aspect": "1:1"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjEwMDAiIHZpZXdCb3g9IjAgMCAxMDAwIDEwMDAiPgo8ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMjQxMTA4Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMGQwNzA0Ii8+PC9saW5lYXJHcmFkaWVudD4KPHJhZGlhbEdyYWRpZW50IGlkPSJyIiBjeD0iLjMiIGN5PSIuMjUiIHI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmOWQ0ZCIgc3RvcC1vcGFjaXR5PSIuOSIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZjlkNGQiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAwMCIgaGVpZ2h0PSIxMDAwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjEwMDAiIGhlaWdodD0iMTAwMCIgZmlsbD0idXJsKCNyKSIvPjxjaXJjbGUgY3g9IjUwMCIgY3k9IjU2MCIgcj0iMzAwIiBmaWxsPSIjN2EzYzE0Ii8+PGNpcmNsZSBjeD0iNTAwIiBjeT0iNTQwIiByPSIyNDAiIGZpbGw9IiNhODU4MjAiLz48Y2lyY2xlIGN4PSI0MzAiIGN5PSI0NzAiIHI9IjYwIiBmaWxsPSIjZmZjZTllIiBvcGFjaXR5PSIuNyIvPjwvc3ZnPg=="}, {"file": "robo_cine-still_1785442422.svg", "kind": "image", "section": "generation", "project": "robo", "mtime": 1785701622.1075935, "prompt": "silhouette walking through desert canyon at golden hour, anamorphic widescreen, dramatic backlight, atmospheric haze, film grain, teal-and-orange grade", "model": "gemini-3.1-flash-image-preview", "provider": "google", "style": "cinematic-still", "cost": 0.03, "created": "2026-07-22T16:06:00", "params": {"aspect": "21:9"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjgwIiBoZWlnaHQ9IjcyMCIgdmlld0JveD0iMCAwIDE2ODAgNzIwIj4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzFjMTIwNiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA3MDYwNCIvPjwvbGluZWFyR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0iciIgY3g9Ii4zIiBjeT0iLjI1IiByPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZmFlNWMiIHN0b3Atb3BhY2l0eT0iLjkiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmZhZTVjIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjE2ODAiIGhlaWdodD0iNzIwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjE2ODAiIGhlaWdodD0iNzIwIiBmaWxsPSJ1cmwoI3IpIi8+PGNpcmNsZSBjeD0iMTI1MCIgY3k9IjMzMCIgcj0iMjAwIiBmaWxsPSIjZmZhZTVjNjYiLz48cmVjdCB4PSIwIiB5PSI1NjAiIHdpZHRoPSIxNjgwIiBoZWlnaHQ9IjE2MCIgZmlsbD0iIzAwMDAwMDg4Ii8+PHJlY3QgeD0iMTIwIiB5PSIyMDAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIzODAiIGZpbGw9IiMwMDAwMDA2NiIvPjwvc3ZnPg=="}, {"file": "robo_clay-mascot_1785485622.svg", "kind": "image", "section": "generation", "project": "robo", "mtime": 1785701622.1071424, "prompt": "cute 3D claymation-style render of a friendly robot mascot, soft studio lighting, pastel palette, rounded shapes, fingerprint texture in the clay, isometric angle", "model": "gemini-3.1-flash-lite-image", "provider": "google", "style": "3d-clay", "cost": 0.02, "created": "2026-07-23T15:55:00", "params": {"aspect": "1:1"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjEwMDAiIHZpZXdCb3g9IjAgMCAxMDAwIDEwMDAiPgo8ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmZkOWM0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjJiOGEwIi8+PC9saW5lYXJHcmFkaWVudD4KPHJhZGlhbEdyYWRpZW50IGlkPSJyIiBjeD0iLjMiIGN5PSIuMjUiIHI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZjRlYyIgc3RvcC1vcGFjaXR5PSIuOSIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZmY0ZWMiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAwMCIgaGVpZ2h0PSIxMDAwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjEwMDAiIGhlaWdodD0iMTAwMCIgZmlsbD0idXJsKCNyKSIvPjxjaXJjbGUgY3g9IjUwMCIgY3k9IjUyMCIgcj0iMjQwIiBmaWxsPSIjZmY4YTVjIi8+PGNpcmNsZSBjeD0iNDIwIiBjeT0iNDYwIiByPSIzNiIgZmlsbD0iIzJiMWExMiIvPjxjaXJjbGUgY3g9IjU4MCIgY3k9IjQ2MCIgcj0iMzYiIGZpbGw9IiMyYjFhMTIiLz48cGF0aCBkPSJNNDIwIDYwMCBRNTAwIDY2MCA1ODAgNjAwIiBzdHJva2U9IiMyYjFhMTIiIHN0cm9rZS13aWR0aD0iMjIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=="}, {"file": "robo_neon-noir_1785528822.svg", "kind": "image", "section": "generation", "project": "robo", "mtime": 1785701622.1065838, "prompt": "lone figure at night in rainy neon city street, saturated magenta and cyan reflections on wet asphalt, volumetric fog, low-angle shot, blade-runner atmosphere", "model": "gemini-3.1-flash-image-preview", "provider": "google", "style": "neon-noir", "cost": 0.03, "created": "2026-07-24T14:44:00", "params": {"aspect": "16:9"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgwIiBoZWlnaHQ9IjcyMCIgdmlld0JveD0iMCAwIDEyODAgNzIwIj4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzBiMTAzMCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA1MDUxMCIvPjwvbGluZWFyR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0iciIgY3g9Ii4zIiBjeT0iLjI1IiByPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMyMmUwZmYiIHN0b3Atb3BhY2l0eT0iLjkiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMjJlMGZmIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSJ1cmwoI3IpIi8+PHJlY3QgeD0iMCIgeT0iNTAwIiB3aWR0aD0iMTI4MCIgaGVpZ2h0PSIyMjAiIGZpbGw9IiNlODM4YTg0NCIvPjxjaXJjbGUgY3g9IjkwMCIgY3k9IjMwMCIgcj0iMTgwIiBmaWxsPSIjMjJlMGZmMzMiLz48cmVjdCB4PSIyMDAiIHk9IjI0MCIgd2lkdGg9IjkwIiBoZWlnaHQ9IjM2MCIgZmlsbD0iI2U4MzhhODY2Ii8+PC9zdmc+"}, {"file": "glomend_minimal-luxe_1785572022.svg", "kind": "image", "section": "generation", "project": "glomend", "mtime": 1785701622.1060987, "prompt": "Glomend bottle floating on monochrome sand background, soft even lighting, long soft shadow, huge negative space, ultra-minimalist premium composition, subtle grain", "model": "gemini-3.1-flash-image-preview", "provider": "google", "style": "minimal-luxe", "cost": 0.03, "created": "2026-07-25T13:33:00", "params": {"aspect": "1:1"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjEwMDAiIHZpZXdCb3g9IjAgMCAxMDAwIDEwMDAiPgo8ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZTllMmQ4Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjY2ZjNGI0Ii8+PC9saW5lYXJHcmFkaWVudD4KPHJhZGlhbEdyYWRpZW50IGlkPSJyIiBjeD0iLjMiIGN5PSIuMjUiIHI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZmZmZiIgc3RvcC1vcGFjaXR5PSIuOSIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZmZmZmYiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAwMCIgaGVpZ2h0PSIxMDAwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjEwMDAiIGhlaWdodD0iMTAwMCIgZmlsbD0idXJsKCNyKSIvPjxyZWN0IHg9IjQyMCIgeT0iMzMwIiB3aWR0aD0iMTYwIiBoZWlnaHQ9IjQ0MCIgcng9IjcwIiBmaWxsPSIjMWMxYTE4IiBvcGFjaXR5PSIuODUiLz48ZWxsaXBzZSBjeD0iNTAwIiBjeT0iODAwIiByeD0iMjMwIiByeT0iMjYiIGZpbGw9IiMwMDAwMDAyMiIvPjwvc3ZnPg=="}, {"file": "glomend_thumb-launch_1785615222.svg", "kind": "image", "section": "generation", "project": "glomend", "mtime": 1785701622.1056216, "prompt": "expressive face on high-contrast dark background, rim lighting, bold depth, room on the right for 3-word title text \"GLO UP NOW\", ultra-sharp, high saturation", "model": "openai/gpt-image-2", "provider": "fal", "style": "thumbnail-pop", "cost": 0.05, "created": "2026-07-26T12:22:00", "params": {"aspect": "16:9"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgwIiBoZWlnaHQ9IjcyMCIgdmlld0JveD0iMCAwIDEyODAgNzIwIj4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzE2MTYyOSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzBhMGExMiIvPjwvbGluZWFyR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0iciIgY3g9Ii4zIiBjeT0iLjI1IiByPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZjZhMmIiIHN0b3Atb3BhY2l0eT0iLjkiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmY2YTJiIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSJ1cmwoI3IpIi8+PGNpcmNsZSBjeD0iMzgwIiBjeT0iMzYwIiByPSIyMzAiIGZpbGw9IiNmZmZmZmYxZiIvPjxyZWN0IHg9IjcwMCIgeT0iMTgwIiB3aWR0aD0iNDQwIiBoZWlnaHQ9IjM2MCIgcng9IjI0IiBmaWxsPSIjZmZmZmZmMTAiLz48dGV4dCB4PSI5MjAiIHk9IjM5MCIgZm9udC1zaXplPSIxMjAiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZpbGw9IiNmZmIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdMTyE8L3RleHQ+PC9zdmc+"}, {"file": "glomend_ugc-kitchen_1785658422.svg", "kind": "image", "section": "generation", "project": "glomend", "mtime": 1785701622.105182, "prompt": "candid iPhone photo of a woman holding Glomend dropper bottle in a sunlit kitchen, natural window light, slightly imperfect framing, authentic skin texture, casual social media aesthetic", "model": "gemini-3.1-flash-lite-image", "provider": "google", "style": "ugc-ad", "cost": 0.02, "created": "2026-07-27T11:11:00", "params": {"aspect": "9:16"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MDAiIGhlaWdodD0iMTYwMCIgdmlld0JveD0iMCAwIDkwMCAxNjAwIj4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzNkMmMxZSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE0MTIxMCIvPjwvbGluZWFyR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0iciIgY3g9Ii4zIiBjeT0iLjI1IiByPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZmQ5YTAiIHN0b3Atb3BhY2l0eT0iLjkiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmZkOWEwIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIxNjAwIiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIxNjAwIiBmaWxsPSJ1cmwoI3IpIi8+PGNpcmNsZSBjeD0iMzAwIiBjeT0iMTEwMCIgcj0iMjYwIiBmaWxsPSIjZmZmZmZmMTQiLz48cmVjdCB4PSIzNjAiIHk9IjcwMCIgd2lkdGg9IjE4MCIgaGVpZ2h0PSI1MDAiIHJ4PSI4MCIgZmlsbD0iI2Q5YzFhMyIgb3BhY2l0eT0iLjgiLz48L3N2Zz4="}, {"file": "glomend_hero-serum_1785701622.svg", "kind": "image", "section": "generation", "project": "glomend", "mtime": 1785701622.1044054, "prompt": "Glomend serum bottle centered on polished stone, studio three-point lighting with soft rim light, 85mm lens, shallow depth of field, warm amber gradient background, upper third empty for headline", "model": "gemini-3.1-flash-image-preview", "provider": "google", "style": "product-hero", "cost": 0.05, "created": "2026-07-28T10:00:00", "params": {"aspect": "4:5", "size": "2K"}, "refs": [], "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MDAiIGhlaWdodD0iMTEyNSIgdmlld0JveD0iMCAwIDkwMCAxMTI1Ij4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzJiMWEzZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzBkMGQxNiIvPjwvbGluZWFyR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0iciIgY3g9Ii4zIiBjeT0iLjI1IiByPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZjhhNWMiIHN0b3Atb3BhY2l0eT0iLjkiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmY4YTVjIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIxMTI1IiBmaWxsPSJ1cmwoI2cpIi8+PHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIxMTI1IiBmaWxsPSJ1cmwoI3IpIi8+PGNpcmNsZSBjeD0iNDUwIiBjeT0iNjAwIiByPSIyMjAiIGZpbGw9IiNmZmZmZmYxOCIvPjxyZWN0IHg9IjM4MCIgeT0iMzgwIiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjQyMCIgcng9IjYwIiBmaWxsPSIjZThkOWM4IiBvcGFjaXR5PSIuODUiLz48L3N2Zz4="}], "styles": [{"name": "product-hero", "desc": "Polished catalog/ad shot of a single product.", "model": "Nano Banana 2 · Aspect: 1:1 or 4:5", "category": "image"}, {"name": "ugc-ad", "desc": "Fake-casual phone photo that sells (native-feeling social ad).", "model": "Nano Banana 2 Lite · Aspect: 4:5 or 9:16", "category": "image"}, {"name": "cinematic-still", "desc": "Movie-frame look for storytelling and covers.", "model": "Nano Banana 2 · Aspect: 16:9 or 21:9", "category": "image"}, {"name": "editorial-fashion", "desc": "Magazine editorial with attitude.", "model": "Nano Banana 2 · Aspect: 4:5", "category": "image"}, {"name": "food-macro", "desc": "Appetite-trigger close-up.", "model": "Nano Banana 2 · Aspect: 1:1", "category": "image"}, {"name": "minimal-luxe", "desc": "Premium minimalist brand look.", "model": "Nano Banana 2 · Aspect: 1:1", "category": "image"}, {"name": "neon-noir", "desc": "Nighttime tech/urban energy.", "model": "Nano Banana 2 · Aspect: 16:9 or 9:16", "category": "image"}, {"name": "retro-vhs", "desc": "Nostalgic analog vibe.", "model": "Nano Banana 2 Lite · Aspect: 4:3", "category": "image"}, {"name": "3d-clay", "desc": "Friendly mascot/explainer style.", "model": "Nano Banana 2 · Aspect: 1:1", "category": "image"}, {"name": "anime-key-visual", "desc": "Poster-grade anime frame.", "model": "Nano Banana 2 · Aspect: 16:9 or 2:3", "category": "image"}, {"name": "documentary-bw", "desc": "Timeless photojournalism.", "model": "Nano Banana 2 · Aspect: 3:2", "category": "image"}, {"name": "thumbnail-pop", "desc": "YouTube/CTR thumbnail.", "model": "GPT Image 2 (renders text) · Aspect: 16:9", "category": "image"}, {"name": "product-orbit", "desc": "", "model": "Kling 3.0 (start frame) · 5s · from a product-hero image", "category": "video"}, {"name": "cinematic-dolly", "desc": "", "model": "Kling 3.0 · 5s (Veo 3.1 for hero shots)", "category": "video"}, {"name": "ugc-talking-head", "desc": "", "model": "Veo 3.1 (native audio) · 8s", "category": "video"}, {"name": "logo-reveal", "desc": "", "model": "Seedance 2.0 Fast (ref-to-video) · 5s · from a clean logo ref", "category": "video"}, {"name": "b-roll-loop", "desc": "", "model": "Kling 3.0 std · 5s · cheap filler footage", "category": "video"}], "models": [{"name": "GPT Image 2", "desc": "Text inside images. Signs, posters, menus, packaging, UI mockups — anything", "type": "Image", "cost": "~$0.05 per image at medium quality — verify on the model page", "provider": "fal.ai"}, {"name": "Kling 3.0", "desc": "General video. The sensible default: good motion, fair price. Text-to-video", "type": "Video · 3–15 seconds · std = 720p, pro = 1080p", "cost": "roughly $0.20–0.35 per second depending on std/pro — verify on the model page", "provider": "Kie AI"}, {"name": "Nano Banana 2 (Gemini image)", "desc": "Everyday images. Cheap, fast, strong with reference images. Lite is the", "type": "Image", "cost": "~$0.034 per 1K image (Lite less) — verify at ai.google.dev/pricing", "provider": "Google AI Studio (also on fal.ai as fallback)"}, {"name": "Seedance 2.0 Fast (reference-to-video)", "desc": "Reference to video: feed it up to 9 images and it animates them. The pick", "type": "Video", "cost": "~$0.24 per second at 720p → a 5-second clip ≈ $1.21 — verify on the model page", "provider": "fal.ai"}, {"name": "Veo 3.1", "desc": "Higher quality video from a start frame (or text). Slower and pricier than", "type": "Video · 8-second clips · 720p · 1–4 samples per call", "cost": "premium — dollars per clip, not cents; verify at ai.google.dev/pricing", "provider": "Google AI Studio (also hosted on fal.ai and Kie as fallback)"}]};
+const PER=30;
+const state={tab:"all",q:"",sort:-1,page:1};
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TABS=[["all","ALL"],["image","IMAGES"],["video","VIDEOS"],["reference","REFERENCES"]];
+
+function filtered(){
+  const q=state.q.toLowerCase();
+  let xs=DATA.items.filter(it=>{
+    if(state.tab==="reference"){if(it.section!=="reference")return false}
+    else if(state.tab!=="all"){if(it.section==="reference"||it.kind!==state.tab)return false}
+    if(!q)return true;
+    return (it.prompt+" "+it.model+" "+it.file+" "+it.style+" "+it.project).toLowerCase().includes(q);
+  });
+  xs.sort((a,b)=>state.sort*((b.created||"")+b.mtime).localeCompare((a.created||"")+a.mtime)||state.sort*(b.mtime-a.mtime));
+  return xs;
+}
+function title(it){
+  if(it.style)return it.style;
+  const stem=it.file.replace(/^refs\//,"").replace(/\.[^.]+$/,"");
+  const parts=stem.split("_");
+  return (parts.length>2?parts.slice(1,-1).join(" "):stem).replace(/-/g," ");
+}
+function render(){
+  const xs=filtered(),pages=Math.max(1,Math.ceil(xs.length/PER));
+  state.page=Math.min(state.page,pages);
+  const slice=xs.slice((state.page-1)*PER,state.page*PER);
+  $("count").textContent=`${slice.length} OF ${xs.length} ITEMS`;
+  $("wall").innerHTML=slice.map((it,i)=>{
+    const src=esc(it.src||it.file);
+    const media=it.kind==="video"
+      ?`<video src="${src}" muted loop playsinline preload="metadata"></video>`
+      :`<img src="${src}" loading="lazy" alt="${esc(title(it))}">`;
+    const tags=[it.model&&`<span>${esc(it.model.split("/").pop())}</span>`,
+      (it.created||"").slice(0,10)&&`<span>${esc((it.created||"").slice(0,10))}</span>`,
+      it.cost!=null&&`<span class="cost">$${(+it.cost).toFixed(2)}</span>`,
+      it.section==="reference"&&`<span class="ref">REF</span>`].filter(Boolean).join("");
+    return `<figure class="tile" style="--i:${i}" data-id="${DATA.items.indexOf(it)}">${media}
+      <figcaption class="tmeta"><b>${esc(title(it))}</b>
+      ${it.prompt?`<p>${esc(it.prompt)}</p>`:""}
+      <div class="tags">${tags}</div></figcaption></figure>`;
+  }).join("");
+  $("empty").style.display=xs.length?"none":"block";
+  $("pager").innerHTML=pages<2?"":Array.from({length:pages},(_,i)=>
+    `<button class="btn${i+1===state.page?" on":""}" data-p="${i+1}">${i+1}</button>`).join("");
+  $("wall").querySelectorAll("video").forEach(v=>{
+    const t=v.closest(".tile");
+    t.addEventListener("mouseenter",()=>{v.play().catch(()=>{})});
+    t.addEventListener("mouseleave",()=>v.pause());
+  });
+}
+function lightbox(it){
+  const src=esc(it.src||it.file);
+  const media=it.kind==="video"
+    ?`<video src="${src}" controls autoplay loop></video>`:`<img src="${src}">`;
+  const row=(l,v)=>v?`<h3>${l}</h3><div class="val">${v}</div>`:"";
+  $("lb").innerHTML=`<div class="lbox" onclick="event.stopPropagation()">
+    <div class="media">${media}</div>
+    <div class="lmeta">
+      ${row("PROMPT",it.prompt?`<span class="prompt">${esc(it.prompt)}</span>`:"")}
+      ${row("MODEL",esc(it.model))}${row("PROVIDER",esc(it.provider))}
+      ${row("STYLE",esc(it.style))}
+      ${row("PARAMS",esc(Object.entries(it.params||{}).filter(([,v])=>v!=null).map(([k,v])=>k+": "+v).join(" · ")))}
+      ${row("REFS",(it.refs||[]).map(esc).join("<br>"))}
+      ${row("COST",it.cost!=null?`<span style="color:var(--acc);font-family:var(--mono)">$${(+it.cost).toFixed(2)}</span>`:"")}
+      ${row("CREATED",esc(it.created))}${row("FILE",esc(it.file))}
+      ${it.prompt?`<button class="btn copy" id="cp">COPY PROMPT</button>`:""}
+    </div></div>`;
+  $("lb").classList.add("on");
+  const cp=$("cp");
+  if(cp)cp.onclick=()=>{navigator.clipboard.writeText(it.prompt);cp.textContent="COPIED ✓";
+    setTimeout(()=>cp.textContent="COPY PROMPT",1200)};
+}
+$("tabs").innerHTML=TABS.map(([k,l])=>`<button class="tab${k==="all"?" on":""}" data-t="${k}">${l}</button>`).join("");
+$("tabs").onclick=e=>{const b=e.target.closest(".tab");if(!b)return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
+  state.tab=b.dataset.t;state.page=1;render()};
+$("q").oninput=e=>{state.q=e.target.value;state.page=1;render()};
+$("sort").onclick=()=>{state.sort*=-1;$("sort").textContent=state.sort>0?"NEWEST ↓":"OLDEST ↑";render()};
+$("pager").onclick=e=>{const b=e.target.closest("[data-p]");if(b){state.page=+b.dataset.p;render();scrollTo({top:0,behavior:"smooth"})}};
+$("wall").onclick=e=>{const t=e.target.closest(".tile");if(t)lightbox(DATA.items[+t.dataset.id])};
+$("lb").onclick=()=>{$("lb").classList.remove("on");$("lb").innerHTML=""};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("lb").classList.remove("on");$("lb").innerHTML=""}});
+const mkCards=(el,xs,f)=>{$(el).innerHTML=xs.map(f).join("")||"<p style='color:var(--dim);font-size:12px'>none found</p>"};
+mkCards("styleCards",DATA.styles,s=>`<div class="pcard"><b>${esc(s.name)}</b><p>${esc(s.desc)}</p>${s.model?`<span class="chip">${esc(s.model)}</span>`:""}</div>`);
+mkCards("modelCards",DATA.models,m=>`<div class="pcard"><b>${esc(m.name)}</b><p>${esc(m.desc)}</p>${m.type?`<span class="chip">${esc(m.type)}</span>`:""} ${m.cost?`<span class="chip">${esc(m.cost.split("—")[0].trim())}</span>`:""}</div>`);
+const toggle=(btn,panel,other)=>{$(btn).onclick=()=>{$(other).classList.remove("on");
+  const on=$(panel).classList.toggle("on");$(btn).classList.toggle("on",on);
+  $(btn===("bStyles")?"bModels":"bStyles").classList.remove("on")}};
+toggle("bStyles","pStyles","pModels");toggle("bModels","pModels","pStyles");
+render();
+</script></body></html>
