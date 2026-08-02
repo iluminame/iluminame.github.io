@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Generate images via Kie.ai, fal.ai, or WaveSpeed (stdlib only).
+"""Generate images via Google AI Studio, Kie.ai, fal.ai, or WaveSpeed (stdlib only).
 
-Submits the job, polls until done, downloads results into the gallery folder,
-and appends one JSON line per run to <out>/log.jsonl.
+Implements the /generate pipeline: call the API per the model recipe, save
+every file FLAT into the generations folder as {project}_{description}_{timestamp}.{ext},
+and write a sidecar log (same basename + .json) next to each file.
 
 Examples:
   python3 generate_image.py --check-keys
+  python3 generate_image.py --provider google --model gemini-3.1-flash-lite-image \
+      --prompt "..." --aspect 4:5 --project acme --desc hero-draft --cost 0.02
+  python3 generate_image.py --provider fal --model openai/gpt-image-2 \
+      --prompt "..." --project acme --desc poster --cost 0.05 --dry-run
   python3 generate_image.py --provider kie --model google/nano-banana-pro \
-      --prompt "..." --aspect 4:5 --count 2 --cost 0.05 --out generations
-  python3 generate_image.py --provider fal --model fal-ai/flux/dev \
-      --prompt "..." --aspect 16:9 --count 4 --cost 0.03 --out generations --dry-run
+      --prompt "..." --ref generations/refs/logo.png --cost 0.05
 """
 import argparse
 import base64
@@ -25,24 +28,19 @@ import urllib.parse
 import urllib.request
 
 KEYS = {
+    "google": "GEMINI_API_KEY",
     "kie": "KIE_API_KEY",
     "fal": "FAL_KEY",
     "wavespeed": "WAVESPEED_API_KEY",
 }
 
-# fal uses named size presets; map common aspect ratios to them.
 FAL_SIZES = {
-    "1:1": "square_hd",
-    "4:3": "landscape_4_3",
-    "3:4": "portrait_4_3",
-    "16:9": "landscape_16_9",
-    "9:16": "portrait_16_9",
-    "4:5": "portrait_4_3",
-    "21:9": "landscape_16_9",
+    "1:1": "square_hd", "4:3": "landscape_4_3", "3:4": "portrait_4_3",
+    "16:9": "landscape_16_9", "9:16": "portrait_16_9", "4:5": "portrait_4_3",
 }
 
 
-def http_json(url, payload=None, headers=None, timeout=120):
+def http_json(url, payload=None, headers=None, timeout=180):
     data = json.dumps(payload).encode() if payload is not None else None
     req = urllib.request.Request(url, data=data, headers=headers or {})
     if data is not None:
@@ -52,92 +50,17 @@ def http_json(url, payload=None, headers=None, timeout=120):
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         body = e.read().decode(errors="replace")[:2000]
-        sys.exit(f"HTTP {e.code} from {url}\n{body}")
+        sys.exit(f"HTTP {e.code} from {url.split('?')[0]}\n{body}")
 
 
-def auth_headers(provider, key):
-    if provider == "fal":
-        return {"Authorization": f"Key {key}"}
-    return {"Authorization": f"Bearer {key}"}
+def b64_file(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
 
 def to_data_uri(path):
     mime = mimetypes.guess_type(path)[0] or "image/png"
-    with open(path, "rb") as f:
-        return f"data:{mime};base64," + base64.b64encode(f.read()).decode()
-
-
-def build_request(args, image_refs):
-    """Return (url, payload) for the submit call of each provider."""
-    if args.provider == "kie":
-        inp = {"prompt": args.prompt}
-        if args.aspect:
-            inp["aspect_ratio"] = args.aspect
-        if args.resolution:
-            inp["resolution"] = args.resolution
-        if image_refs:
-            inp["image_urls"] = image_refs
-        if args.input_json:
-            inp.update(json.loads(args.input_json))
-        return "https://api.kie.ai/api/v1/jobs/createTask", {"model": args.model, "input": inp}
-
-    if args.provider == "fal":
-        inp = {"prompt": args.prompt, "num_images": args.count}
-        if args.aspect:
-            inp["image_size"] = FAL_SIZES.get(args.aspect, args.aspect)
-        if image_refs:
-            inp["image_url" if len(image_refs) == 1 else "image_urls"] = (
-                image_refs[0] if len(image_refs) == 1 else image_refs)
-        if args.input_json:
-            inp.update(json.loads(args.input_json))
-        return f"https://queue.fal.run/{args.model}", inp
-
-    # wavespeed
-    inp = {"prompt": args.prompt}
-    if args.input_json:
-        inp.update(json.loads(args.input_json))
-    if image_refs:
-        inp["images"] = image_refs
-    return f"https://api.wavespeed.ai/api/v3/{args.model}", inp
-
-
-def poll_kie(task_id, headers):
-    url = f"https://api.kie.ai/api/v1/jobs/recordInfo?taskId={urllib.parse.quote(task_id)}"
-    while True:
-        d = http_json(url, headers=headers).get("data") or {}
-        state = d.get("state")
-        if state == "success":
-            result = json.loads(d.get("resultJson") or "{}")
-            return result.get("resultUrls") or result.get("result_urls") or []
-        if state == "fail":
-            sys.exit(f"Kie.ai job failed: {d.get('failMsg')}")
-        print(f"  … {state}", flush=True)
-        time.sleep(5)
-
-
-def poll_fal(submit_resp, headers):
-    status_url = submit_resp["status_url"]
-    while True:
-        s = http_json(status_url, headers=headers)
-        if s.get("status") == "COMPLETED":
-            r = http_json(submit_resp["response_url"], headers=headers)
-            imgs = r.get("images") or ([r["image"]] if r.get("image") else [])
-            return [i["url"] if isinstance(i, dict) else i for i in imgs]
-        print(f"  … {s.get('status')}", flush=True)
-        time.sleep(4)
-
-
-def poll_wavespeed(pred_id, headers):
-    url = f"https://api.wavespeed.ai/api/v3/predictions/{pred_id}/result"
-    while True:
-        d = http_json(url, headers=headers).get("data") or {}
-        status = d.get("status")
-        if status == "completed":
-            return d.get("outputs") or []
-        if status == "failed":
-            sys.exit(f"WaveSpeed job failed: {d.get('error')}")
-        print(f"  … {status}", flush=True)
-        time.sleep(4)
+    return f"data:{mime};base64," + b64_file(path)
 
 
 def slugify(text, maxlen=40):
@@ -145,40 +68,173 @@ def slugify(text, maxlen=40):
     return s[:maxlen].rstrip("-") or "gen"
 
 
-def download(urls, out_dir, slug):
+def out_basename(out_dir, project, desc):
     os.makedirs(out_dir, exist_ok=True)
+    return os.path.join(out_dir, f"{project}_{desc}_{int(time.time())}")
+
+
+def write_sidecar(media_path, args, refs):
+    sidecar = os.path.splitext(media_path)[0] + ".json"
+    with open(sidecar, "w") as f:
+        json.dump({
+            "model": args.model,
+            "provider": args.provider,
+            "type": "image",
+            "prompt": args.prompt,
+            "refs": refs,
+            "params": {"aspect": args.aspect or None, "size": args.resolution or None},
+            "est_cost_usd": round(args.cost, 4),
+            "created": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
+        }, f, indent=2, ensure_ascii=False)
+
+
+def download(url, path_base, index):
+    ext = os.path.splitext(urllib.parse.urlparse(url).path)[1] or ".png"
+    path = f"{path_base}-{index}{ext}" if index else f"{path_base}{ext}"
+    with urllib.request.urlopen(url, timeout=300) as r, open(path, "wb") as f:
+        f.write(r.read())
+    return path
+
+
+# ---------- providers ----------
+
+def run_google(args, key, refs_local):
+    url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+           f"{args.model}:generateContent?key={urllib.parse.quote(key)}")
+    parts = [{"text": args.prompt}]
+    for p in refs_local:
+        parts.append({"inline_data": {
+            "mime_type": mimetypes.guess_type(p)[0] or "image/png",
+            "data": b64_file(p)}})
+    payload = {"contents": [{"parts": parts}]}
+    if args.aspect:
+        payload["generationConfig"] = {"imageConfig": {"aspectRatio": args.aspect}}
+    if args.dry_run:
+        return url.split("?")[0] + "?key=…", payload, None
+    resp = http_json(url, payload)
     paths = []
-    for i, u in enumerate(urls, 1):
-        ext = os.path.splitext(urllib.parse.urlparse(u).path)[1] or ".png"
-        path = os.path.join(out_dir, f"{slug}-{int(time.time())}-{i}{ext}")
-        with urllib.request.urlopen(u, timeout=300) as r, open(path, "wb") as f:
-            f.write(r.read())
-        paths.append(path)
-        print(f"saved: {path}")
-    return paths
+    base = out_basename(args.out, args.project, args.desc)
+    n = 0
+    for cand in resp.get("candidates", []):
+        for part in (cand.get("content") or {}).get("parts", []):
+            blob = part.get("inlineData") or part.get("inline_data")
+            if not blob:
+                continue
+            n += 1
+            ext = mimetypes.guess_extension(blob.get("mimeType", "image/png")) or ".png"
+            path = f"{base}-{n}{ext}" if n > 1 else f"{base}{ext}"
+            with open(path, "wb") as f:
+                f.write(base64.b64decode(blob["data"]))
+            paths.append(path)
+    if not paths:
+        sys.exit(f"No image in Google reply (safety block?): {json.dumps(resp)[:800]}")
+    return None, None, paths
 
 
-def log_run(out_root, entry):
-    os.makedirs(out_root, exist_ok=True)
-    with open(os.path.join(out_root, "log.jsonl"), "a") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+def run_kie(args, key, ref_uris):
+    inp = {"prompt": args.prompt}
+    if args.aspect:
+        inp["aspect_ratio"] = args.aspect
+    if args.resolution:
+        inp["resolution"] = args.resolution
+    if ref_uris:
+        inp["image_urls"] = ref_uris
+    if args.input_json:
+        inp.update(json.loads(args.input_json))
+    url, payload = "https://api.kie.ai/api/v1/jobs/createTask", {"model": args.model, "input": inp}
+    if args.dry_run:
+        return url, payload, None
+    headers = {"Authorization": f"Bearer {key}"}
+    resp = http_json(url, payload, headers)
+    if resp.get("code") != 200:
+        sys.exit(f"Kie.ai error: {resp.get('msg') or resp}")
+    poll = ("https://api.kie.ai/api/v1/jobs/recordInfo?taskId="
+            + urllib.parse.quote(resp["data"]["taskId"]))
+    while True:
+        d = http_json(poll, headers=headers).get("data") or {}
+        if d.get("state") == "success":
+            urls = json.loads(d.get("resultJson") or "{}").get("resultUrls") or []
+            break
+        if d.get("state") == "fail":
+            sys.exit(f"Kie.ai job failed: {d.get('failMsg')}")
+        print(f"  … {d.get('state')}", flush=True)
+        time.sleep(5)
+    base = out_basename(args.out, args.project, args.desc)
+    return None, None, [download(u, base, i if len(urls) > 1 else 0)
+                        for i, u in enumerate(urls, 1)]
+
+
+def run_fal(args, key, ref_uris):
+    inp = {"prompt": args.prompt, "num_images": args.count}
+    if args.aspect:
+        inp["image_size"] = FAL_SIZES.get(args.aspect, args.aspect)
+    if ref_uris:
+        inp["image_url" if len(ref_uris) == 1 else "image_urls"] = (
+            ref_uris[0] if len(ref_uris) == 1 else ref_uris)
+    if args.input_json:
+        inp.update(json.loads(args.input_json))
+    url = f"https://queue.fal.run/{args.model}"
+    if args.dry_run:
+        return url, inp, None
+    headers = {"Authorization": f"Key {key}"}
+    resp = http_json(url, inp, headers)
+    while True:
+        s = http_json(resp["status_url"], headers=headers)
+        if s.get("status") == "COMPLETED":
+            r = http_json(resp["response_url"], headers=headers)
+            imgs = r.get("images") or ([r["image"]] if r.get("image") else [])
+            urls = [i["url"] if isinstance(i, dict) else i for i in imgs]
+            break
+        print(f"  … {s.get('status')}", flush=True)
+        time.sleep(4)
+    base = out_basename(args.out, args.project, args.desc)
+    return None, None, [download(u, base, i if len(urls) > 1 else 0)
+                        for i, u in enumerate(urls, 1)]
+
+
+def run_wavespeed(args, key, ref_uris):
+    inp = {"prompt": args.prompt}
+    if ref_uris:
+        inp["images"] = ref_uris
+    if args.input_json:
+        inp.update(json.loads(args.input_json))
+    url = f"https://api.wavespeed.ai/api/v3/{args.model}"
+    if args.dry_run:
+        return url, inp, None
+    headers = {"Authorization": f"Bearer {key}"}
+    resp = http_json(url, inp, headers)
+    poll = f"https://api.wavespeed.ai/api/v3/predictions/{resp['data']['id']}/result"
+    while True:
+        d = http_json(poll, headers=headers).get("data") or {}
+        if d.get("status") == "completed":
+            urls = d.get("outputs") or []
+            break
+        if d.get("status") == "failed":
+            sys.exit(f"WaveSpeed job failed: {d.get('error')}")
+        print(f"  … {d.get('status')}", flush=True)
+        time.sleep(4)
+    base = out_basename(args.out, args.project, args.desc)
+    return None, None, [download(u, base, i if len(urls) > 1 else 0)
+                        for i, u in enumerate(urls, 1)]
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--provider", choices=list(KEYS), help="kie | fal | wavespeed")
-    p.add_argument("--model", help="provider model ID (see references/providers.md)")
-    p.add_argument("--prompt", help="full production prompt")
-    p.add_argument("--aspect", default="", help="aspect ratio, e.g. 1:1, 4:5, 16:9")
-    p.add_argument("--resolution", default="", help="kie only, e.g. 1K, 2K, 4K")
-    p.add_argument("--count", type=int, default=1, help="number of images (fal batches; kie/wavespeed loop)")
-    p.add_argument("--image-url", action="append", default=[], help="source image (URL or local path) for edit models; repeatable")
+    p.add_argument("--provider", choices=list(KEYS))
+    p.add_argument("--model", help="exact model ID from the recipe file in models/")
+    p.add_argument("--prompt")
+    p.add_argument("--aspect", default="", help="e.g. 1:1, 4:5, 16:9")
+    p.add_argument("--resolution", default="", help="e.g. 1K, 2K (model permitting)")
+    p.add_argument("--count", type=int, default=1, help="images per call (fal batches natively)")
+    p.add_argument("--ref", action="append", default=[],
+                   help="reference image: local path (generations/refs/...) or URL; repeatable")
     p.add_argument("--input-json", help="extra provider-specific input fields as JSON")
-    p.add_argument("--cost", type=float, default=0.0, help="estimated USD cost PER IMAGE, for the log")
-    p.add_argument("--out", default="generations", help="gallery root folder")
-    p.add_argument("--style", default="", help="style preset name, for the log")
-    p.add_argument("--dry-run", action="store_true", help="print the request and exit without spending")
-    p.add_argument("--check-keys", action="store_true", help="report which provider keys are set")
+    p.add_argument("--cost", type=float, default=0.0, help="estimated USD for this run (goes in the sidecar log)")
+    p.add_argument("--project", default="gen", help="project tag for the filename")
+    p.add_argument("--desc", default="", help="short description for the filename (defaults to prompt slug)")
+    p.add_argument("--out", default="generations", help="flat output folder")
+    p.add_argument("--dry-run", action="store_true", help="print the request, spend nothing")
+    p.add_argument("--check-keys", action="store_true")
     args = p.parse_args()
 
     if args.check_keys:
@@ -188,48 +244,31 @@ def main():
     for req in ("provider", "model", "prompt"):
         if not getattr(args, req):
             p.error(f"--{req} is required (or use --check-keys)")
+    args.desc = slugify(args.desc or args.prompt)
+    args.project = slugify(args.project)
 
-    key = os.environ.get(KEYS[args.provider])
+    key = os.environ.get(KEYS[args.provider], "")
     if not key and not args.dry_run:
-        sys.exit(f"Missing {KEYS[args.provider]} env var for provider '{args.provider}'.")
+        sys.exit(f"Missing {KEYS[args.provider]} for provider '{args.provider}' — add it to .env / environment.")
 
-    image_refs = [to_data_uri(u) if os.path.exists(u) else u for u in args.image_url]
-    url, payload = build_request(args, image_refs)
-    runs = 1 if args.provider == "fal" else args.count  # fal batches natively
+    refs_local = [r for r in args.ref if os.path.exists(r)]
+    ref_uris = [to_data_uri(r) if os.path.exists(r) else r for r in args.ref]
+
+    runner = {"google": run_google, "kie": run_kie, "fal": run_fal,
+              "wavespeed": run_wavespeed}[args.provider]
+    ref_arg = refs_local if args.provider == "google" else ref_uris
+    url, payload, paths = runner(args, key, ref_arg)
 
     if args.dry_run:
-        print(f"POST {url}  x{runs}")
+        print(f"POST {url}")
         print(json.dumps(payload, indent=2)[:3000])
-        print(f"estimated cost: ~${args.cost * args.count:.2f} total")
+        print(f"estimated cost: ~${args.cost:.2f}")
         return
 
-    headers = auth_headers(args.provider, key)
-    date_dir = os.path.join(args.out, dt.date.today().isoformat())
-    slug = slugify(args.prompt)
-    all_paths = []
-    for n in range(runs):
-        print(f"submitting to {args.provider} ({n + 1}/{runs}) …", flush=True)
-        resp = http_json(url, payload, headers)
-        if args.provider == "kie":
-            if resp.get("code") != 200:
-                sys.exit(f"Kie.ai error: {resp.get('msg') or resp}")
-            urls = poll_kie(resp["data"]["taskId"], headers)
-        elif args.provider == "fal":
-            urls = poll_fal(resp, headers)
-        else:
-            if resp.get("code") not in (200, None):
-                sys.exit(f"WaveSpeed error: {resp.get('message') or resp}")
-            urls = poll_wavespeed(resp["data"]["id"], headers)
-        all_paths += download(urls, date_dir, slug)
-
-    total = args.cost * max(len(all_paths), args.count)
-    log_run(args.out, {
-        "ts": dt.datetime.now().isoformat(timespec="seconds"),
-        "type": "image", "provider": args.provider, "model": args.model,
-        "prompt": args.prompt, "style": args.style, "aspect": args.aspect,
-        "files": all_paths, "est_cost_usd": round(total, 4),
-    })
-    print(f"\ndone: {len(all_paths)} file(s), estimated ~${total:.2f}")
+    for path in paths:
+        write_sidecar(path, args, args.ref)
+        print(f"saved: {path}  (+ sidecar .json)")
+    print(f"\ndone: {len(paths)} file(s), estimated ~${args.cost:.2f}")
 
 
 if __name__ == "__main__":

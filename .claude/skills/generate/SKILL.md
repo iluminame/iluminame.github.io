@@ -1,163 +1,162 @@
 ---
 name: generate
 description: >-
-  Pay-as-you-go AI image and video generation that replaces a Higgsfield-style
-  subscription. Use this skill whenever the user wants to generate, create, or
-  edit AI images, ads, product shots, posters, thumbnails, logos, social media
-  creatives, or AI video clips (cinematic shots, UGC ads, product orbits,
-  logo reveals) — including requests like "/generate", "generate an ad",
-  "genera una imagen", "crea un video", "haz un anuncio", "make a thumbnail",
-  or "animate this image". Routes each request to the best-value model on
-  Kie.ai, fal.ai, or WaveSpeed, shows the estimated cost BEFORE generating,
-  applies style presets, saves everything to a local gallery with a running
-  cost log, and can turn a generated image into a full landing page.
+  Generate images and videos via AI model APIs, pay-as-you-go. Use this skill
+  whenever the user wants to generate, create, edit, or animate AI images,
+  ads, product shots, posters, thumbnails, logos, social creatives, or video
+  clips — triggers include "/generate", "generate image", "generate video",
+  "create image", "thumbnail", "animate", "genera una imagen", "crea un
+  video", "haz un anuncio". Routes every request to the cheapest capable
+  model (Nano Banana 2, GPT Image 2, Kling 3.0, Veo 3.1, Seedance 2.0) across
+  Kie AI, fal.ai, WaveSpeed, or Google AI Studio, quotes cost before paid
+  runs, uses real reference images from a refs folder, files every output
+  flat in one generations folder with a sidecar log, and can build a gallery
+  wall or turn an image into a landing page.
 ---
 
-# /generate — Pay-as-you-go AI image & video generation
+# /generate
 
-Generate images and videos through metered APIs (Kie.ai, fal.ai, WaveSpeed)
-instead of a flat subscription. The philosophy, in order of priority:
+One command that makes images and videos, routes every request to the
+cheapest capable model, never surprises the user with a bill, and files every
+output in one place. Four-step pipeline on every request:
 
-1. **Cost transparency.** The user sees the estimated cost of every generation
-   *before* it runs. A subscription hides cost per asset; this skill surfaces it.
-2. **You own the outputs.** Files are downloaded to the user's disk immediately
-   (provider-hosted URLs expire, and platform terms can change — that's the whole
-   reason this skill exists). Never leave results only as remote URLs.
-3. **Right model for the job.** A $0.02 model is fine for drafts; spend more only
-   when the brief demands it. Cheap first, premium on request.
+**Route → Prep refs → Generate → Log**
 
-Reference for context: a Higgsfield subscription starts around $49/month and works
-out to roughly $0.31–$0.34 per image. The default image model here costs about
-$0.05 per 2K image — state this comparison if the user asks "is this cheaper?".
+## Step 1 — Route
 
-## Setup (first use)
+Pick the model for the job, then the cheapest provider that runs it well.
+**Read the model's recipe file in `models/` before every generation** — it has
+the endpoint, auth, exact request shape, and response handling.
 
-The scripts need at least one provider API key as an environment variable:
+| Task | Default model | Recipe |
+|---|---|---|
+| Image (default — drafts, iteration) | Nano Banana 2 Lite | `models/nano-banana-2.md` |
+| Image (quality / reference-driven) | Nano Banana 2 | `models/nano-banana-2.md` |
+| Image with readable text (signs, posters, packaging, UI) | GPT Image 2 | `models/gpt-image-2.md` |
+| Video (default) | Kling 3.0 | `models/kling-3.md` |
+| Video (hero quality, from start frame) | Veo 3.1 | `models/veo-3-1.md` |
+| Animate reference images (up to 9) | Seedance 2.0 Fast | `models/seedance-2-fast.md` |
 
-| Provider  | Env var             | Get a key at              | Best for |
-|-----------|---------------------|---------------------------|----------|
-| Kie.ai    | `KIE_API_KEY`       | https://kie.ai            | Cheapest images, huge model catalog |
-| fal.ai    | `FAL_KEY`           | https://fal.ai/dashboard  | Video generation, reliable queue |
-| WaveSpeed | `WAVESPEED_API_KEY` | https://wavespeed.ai      | Alternative for both |
+Provider routing:
+1. Default to the LOWEST COST provider that runs the model well
+   (check Kie AI, fal.ai, WaveSpeed AI, Google AI Studio).
+2. If the cheapest route lacks the model, fails auth, or errors, fall back to
+   the next provider (fal.ai first fallback, WaveSpeed second).
+3. Never hide a provider swap. Say which route ran and why.
 
-Check what's available with: `python3 scripts/generate_image.py --check-keys`
+Models change monthly. On a "model not found" error, open the provider's
+model page, copy the id fresh, and update the recipe file — that's the only
+maintenance this system needs. Adding a new model = adding one recipe file
+(template at the bottom of `references/providers.md`).
 
-- **Claude Code:** the user can export the key in their shell profile or a `.env`
-  file (never commit it — check `.gitignore` covers it).
-- **Claude.ai chat:** ask the user to paste the key once, export it inside the
-  code-execution sandbox for the session. If the sandbox blocks outbound network
-  calls, fall back to *manual mode*: build the exact `curl` commands and JSON
-  payloads (see `references/providers.md`) and hand them to the user to run
-  locally, then continue the workflow with the files they report back.
+## Step 2 — Prep refs
 
-If no key exists yet, don't stall: help the user pick ONE provider (default:
-Kie.ai for images, fal.ai if they mainly want video), link the signup page, and
-continue once they have a key. Most providers give free starter credits.
+Load real reference images (logos, faces, product shots, style frames) from
+`generations/refs/`. **Never describe a logo or face in words** — a described
+logo comes back wrong every time: wrong shape, wrong colors, made-up details.
+Pass the actual file into the API call. If the needed ref is missing, stop
+and ask the user for it.
 
-## The workflow
+For style (not identity), expand the user's short brief into a production
+prompt using the preset library in `references/styles.md`.
 
-Follow these steps for every generation request:
+## Step 3 — Generate
 
-### 1. Understand the brief
-Extract: subject, purpose (ad? thumbnail? hero image? clip?), aspect ratio,
-how many variations, and any style cues. Don't interrogate the user — infer
-sensible defaults (ads → 1:1 or 4:5, thumbnails → 16:9, stories → 9:16,
-video → 16:9, 5s) and state them.
+Call the API per the recipe. Most image models are sync (result in one
+reply); most video models are async: submit → get task id → poll every 5–15
+seconds patiently → download the file **immediately** (result URLs often
+expire in hours). Run multiple generations one at a time to avoid rate limits.
 
-### 2. Apply a style preset
-Read `references/styles.md` and pick the preset that matches the brief (or
-combine two). Expand the user's short request into a full production prompt
-using the preset's scaffold: subject → action → setting → lighting → camera →
-mood → on-image text. Show the user the final prompt. A well-built prompt is
-what makes a $0.05 model look like a $49/month platform.
-
-### 3. Route to a model
-Default routing (details, exact model IDs, and API shapes in
-`references/providers.md` — read it before the first generation of a session):
-
-| Task | Default | Step up | Premium |
-|------|---------|---------|---------|
-| Image (draft/iteration) | Kie.ai · nano-banana (~$0.02) | — | — |
-| Image (final, 2K) | Kie.ai · nano-banana-pro (~$0.05) | fal.ai · FLUX dev (~$0.03) | fal.ai · FLUX pro (~$0.05+) |
-| Image edit / remix (image→image) | Kie.ai · nano-banana edit | fal.ai · seedream v4 edit | — |
-| Video 5s (budget) | fal.ai · Seedance lite / WAN (~$0.10–0.20) | — | — |
-| Video 5s (standard) | fal.ai · Kling 2.5 turbo (~$0.35) | fal.ai · Hailuo-02 | — |
-| Video with audio / flagship | — | — | Veo 3 fast (~$1.20) / Veo 3 (~$3+) |
-
-Rules of thumb: iterate cheap, upscale/premium only the winning variant; prefer
-the provider the user already has a key for; batch variations in one call when
-the API supports `num_images`.
-
-### 4. Estimate cost and confirm
-Always print the estimate before generating:
-`→ 4 images · nano-banana-pro · ~$0.20 total`.
-- Total ≤ $0.50 and within any stated budget → proceed without asking.
-- Total > $0.50, or premium video models, or the monthly cap in
-  `generations/budget.json` would be crossed → ask the user first.
-- After each run, the cost log accumulates in `generations/log.jsonl`;
-  `python3 scripts/gallery.py --stats` shows spend vs. cap.
-
-### 5. Generate
-Use the bundled scripts (stdlib-only Python, no installs needed):
+The bundled scripts implement both patterns for every provider (stdlib-only
+Python — no installs):
 
 ```bash
-# Images
-python3 scripts/generate_image.py --provider kie --model google/nano-banana-pro \
-  --prompt "<final prompt>" --aspect 4:5 --count 4 --cost 0.05 --out generations
+python3 scripts/generate_image.py --check-keys   # which API keys are set?
 
-# Video (submits, polls, downloads — video jobs can take 1–6 min)
-python3 scripts/generate_video.py --provider fal --model fal-ai/bytedance/seedance/v1/lite/text-to-video \
-  --prompt "<final prompt>" --duration 5 --aspect 16:9 --cost 0.15 --out generations
+python3 scripts/generate_image.py --provider google --model gemini-3.1-flash-lite-image \
+  --prompt "<final prompt>" --aspect 4:5 --project acme --desc hero-draft \
+  --cost 0.02 --out generations
 
-# Image → video (animate a generated image)
-python3 scripts/generate_video.py --provider fal --model fal-ai/kling-video/v2.5-turbo/pro/image-to-video \
-  --prompt "<camera + motion prompt>" --image-url <url-or-path> --cost 0.35 --out generations
+python3 scripts/generate_video.py --provider kie --model kling-3.0/video \
+  --prompt "<motion prompt>" --duration 5 --aspect 16:9 \
+  --ref generations/refs/product.png --project acme --desc orbit \
+  --cost 1.50 --out generations
 ```
 
-Add `--dry-run` to print the exact API request without spending money — use it
-when debugging or when the user just wants to see what would happen. If a script
-fails with an API error, read the error body: most failures are a wrong model ID
-(check `references/providers.md` → "Finding current model IDs") or a missing key.
+`--dry-run` prints the exact request without spending money. `--ref` accepts
+local paths (converted/uploaded as the provider requires) and is repeatable.
 
-### 6. Update the gallery
-Every successful run already appends to `generations/log.jsonl`. Rebuild the
-browsable gallery and show totals:
+## Step 4 — Log
 
-```bash
-python3 scripts/gallery.py            # writes generations/index.html
-python3 scripts/gallery.py --stats    # spend by month/provider vs budget cap
+After every save, write the sidecar log: a small JSON file next to the media,
+**same basename, `.json` extension** (the scripts do this automatically):
+
+```json
+{
+  "model": "gemini-3.1-flash-lite-image",
+  "prompt": "the full text prompt that was sent to the API",
+  "refs": ["refs/logo.png"],
+  "params": { "aspect": "16:9", "size": "2K" },
+  "est_cost_usd": 0.02,
+  "created": "2026-07-30T09:41:00Z"
+}
 ```
 
-Tell the user where their files are and open/link `generations/index.html`.
-The gallery shows every asset with its prompt, model, cost, and date — this is
-the user's owned, local replacement for a platform's cloud gallery.
+Same basename plus `.json` is the contract — any future tool (or a plain
+folder search) can recover exactly how any file was made.
 
-### 7. Offer the natural next step
-Based on what was generated, offer exactly one relevant follow-up:
-- Draft images → "want me to upscale / re-run the best one at 2K?"
-- Final image → "want me to animate this into a 5s clip?" (image→video)
-- A strong hero image → "want me to build a landing page around it?" —
-  then follow `references/website.md` (image → full website workflow).
+## Output
 
-## Guardrails
+- Save every file FLAT into the user's generations folder (default:
+  `generations/` in the workspace; if the user names a folder once, keep
+  using it consistently — one flat library is what makes galleries and
+  dashboards work with zero setup).
+- **No subfolders.** Reference images live in `generations/refs/`.
+- Naming: `{project}_{description}_{timestamp}.{ext}`
 
-- Never expose or print API keys; never commit them (keep `.env` and
-  `generations/` out of git unless the user explicitly wants outputs versioned).
-- Respect `generations/budget.json` (`{"monthly_cap_usd": 20}` by default —
-  create it on first run if missing). Warn at 80% of cap.
-- Prices in this skill are estimates; when the user needs exact numbers, check
-  the provider's pricing page (links in `references/providers.md`).
-- Don't generate content that violates provider ToS (real-person deepfakes,
-  trademarked characters for commercial use, etc.) — flag it and offer an
-  alternative concept instead.
+## Rules (the contract)
+
+- **Quote before video.** State model, duration, resolution, and expected
+  dollars, then wait for the user's explicit go before any paid video run.
+  Quoting alone is not approval. One approval = one run.
+- **Draft cheap, finish pretty.** Iterate on the cheap image model
+  (~$0.01–0.03). Only when the user picks a favourite does the same prompt
+  rerun on a quality model. For images ≲$0.10 total, state the cost and
+  proceed; still respect the monthly cap in `generations/budget.json`
+  (`gallery.py --stats` shows spend vs. cap; warn at 80%).
+- **Real refs, never described.** (Step 2 — this is the rule that saves the
+  most disappointment.)
+- **One flat folder.** Sorting into subfolders feels tidy but breaks every
+  tool that reads the library.
+- **One at a time.** Sequential API calls; no parallel paid jobs.
+- **Log every prompt.** Sidecar JSON after every save.
+- Keys live in `.env` / environment variables (`KIE_API_KEY`, `FAL_KEY`,
+  `WAVESPEED_API_KEY`, `GEMINI_API_KEY`) — read them from there, never paste
+  into code, never commit them.
+- Ballpark costs (verify on pricing pages before relying on them):
+  draft image $0.01–0.03 · quality image $0.05–0.15 · video $0.20–0.35
+  **per second** (a 10s clip is $2–3.50 — this is why the cost gate exists).
+
+## After generating
+
+- Rebuild the gallery wall: `python3 scripts/gallery.py` writes
+  `generations/index.html` — a masonry bento wall of everything ever
+  generated (hover plays videos, click opens big). Tell the user where it is.
+- Offer exactly one natural next step: rerun the favourite on the quality
+  model, animate the winning image into a clip, or build a landing page
+  around it (`references/website.md`).
 
 ## Bundled files
 
-| File | When to read/use |
-|------|------------------|
-| `references/providers.md` | Before the first generation of a session: API endpoints, auth, model IDs, prices, curl fallbacks, error fixes |
-| `references/styles.md` | Step 2 of every request: style presets and the prompt formula |
-| `references/website.md` | When turning a generated image into a landing page |
-| `scripts/generate_image.py` | All image generation/editing calls |
-| `scripts/generate_video.py` | All video generation calls (text→video and image→video) |
-| `scripts/gallery.py` | After generations, and for `--stats` cost reports |
+| File | When to use |
+|---|---|
+| `models/*.md` | Before every generation — the recipe for the chosen model |
+| `references/providers.md` | Provider auth shapes, Kie file upload, troubleshooting, new-recipe template |
+| `references/styles.md` | Expanding briefs into production prompts (style presets) |
+| `references/website.md` | Turning a generated image into a landing page |
+| `scripts/generate_image.py` · `scripts/generate_video.py` | All API calls (sync + async, all providers) |
+| `scripts/gallery.py` | Rebuild the gallery wall; `--stats` for spend vs. budget |
+
+In Claude.ai chat without network access: build the exact `curl` commands
+from the recipe file for the user to run locally (fallback section in
+`references/providers.md`), then log the results into the same folder scheme.

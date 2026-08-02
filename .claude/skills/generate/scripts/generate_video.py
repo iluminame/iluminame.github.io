@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-"""Generate video via fal.ai, Kie.ai, or WaveSpeed (stdlib only).
+"""Generate video via Kie.ai, fal.ai, WaveSpeed, or Google AI Studio (stdlib only).
 
-Same submit → poll → download → log loop as generate_image.py, tuned for video
-jobs (longer polling, single output, image→video support).
+Async-aware: submits the job, polls patiently (video takes 1–6 min), downloads
+immediately (result URLs expire), saves FLAT as
+{project}_{description}_{timestamp}.{ext} and writes the sidecar .json log.
+
+REMEMBER THE COST GATE: quote model + duration + resolution + dollars and get
+the user's explicit go before running this script. One approval = one run.
 
 Examples:
+  python3 generate_video.py --provider kie --model kling-3.0/video \
+      --prompt "..." --duration 5 --aspect 16:9 --mode std \
+      --project acme --desc orbit --cost 1.50
   python3 generate_video.py --provider fal \
-      --model fal-ai/bytedance/seedance/v1/lite/text-to-video \
-      --prompt "..." --duration 5 --aspect 16:9 --cost 0.15 --out generations
-  python3 generate_video.py --provider fal \
-      --model fal-ai/kling-video/v2.5-turbo/pro/image-to-video \
-      --prompt "slow orbit around the product" \
-      --image-url generations/2026-07-31/ad-1.png --cost 0.35 --out generations
+      --model bytedance/seedance-2.0/fast/reference-to-video \
+      --prompt "..." --ref generations/refs/a.png --ref generations/refs/b.png \
+      --duration 5 --cost 1.21
+  python3 generate_video.py --provider google --model veo-3.1-generate-preview \
+      --prompt "..." --ref generations/acme_hero_1774912000.png --cost 3.00
 """
 import argparse
 import base64
@@ -26,10 +32,15 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-KEYS = {"kie": "KIE_API_KEY", "fal": "FAL_KEY", "wavespeed": "WAVESPEED_API_KEY"}
+KEYS = {
+    "google": "GEMINI_API_KEY",
+    "kie": "KIE_API_KEY",
+    "fal": "FAL_KEY",
+    "wavespeed": "WAVESPEED_API_KEY",
+}
 
 
-def http_json(url, payload=None, headers=None, timeout=180):
+def http_json(url, payload=None, headers=None, timeout=300):
     data = json.dumps(payload).encode() if payload is not None else None
     req = urllib.request.Request(url, data=data, headers=headers or {})
     if data is not None:
@@ -39,13 +50,17 @@ def http_json(url, payload=None, headers=None, timeout=180):
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         body = e.read().decode(errors="replace")[:2000]
-        sys.exit(f"HTTP {e.code} from {url}\n{body}")
+        sys.exit(f"HTTP {e.code} from {url.split('?')[0]}\n{body}")
+
+
+def b64_file(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
 
 def to_data_uri(path):
     mime = mimetypes.guess_type(path)[0] or "image/png"
-    with open(path, "rb") as f:
-        return f"data:{mime};base64," + base64.b64encode(f.read()).decode()
+    return f"data:{mime};base64," + b64_file(path)
 
 
 def slugify(text, maxlen=40):
@@ -53,84 +68,114 @@ def slugify(text, maxlen=40):
     return s[:maxlen].rstrip("-") or "gen"
 
 
+def download(url, out_dir, project, desc, index=0):
+    os.makedirs(out_dir, exist_ok=True)
+    ext = os.path.splitext(urllib.parse.urlparse(url).path)[1] or ".mp4"
+    stem = f"{project}_{desc}_{int(time.time())}" + (f"-{index}" if index else "")
+    path = os.path.join(out_dir, stem + ext)
+    with urllib.request.urlopen(url, timeout=900) as r, open(path, "wb") as f:
+        f.write(r.read())
+    return path
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--provider", choices=list(KEYS), required=True)
-    p.add_argument("--model", required=True, help="provider model ID (see references/providers.md)")
+    p.add_argument("--model", required=True, help="exact model ID from the recipe file in models/")
     p.add_argument("--prompt", required=True)
     p.add_argument("--duration", type=int, default=5, help="seconds, model permitting")
     p.add_argument("--aspect", default="16:9")
-    p.add_argument("--resolution", default="", help="e.g. 720p, 1080p (model permitting)")
-    p.add_argument("--image-url", default="", help="source frame for image-to-video (URL or local path)")
+    p.add_argument("--resolution", default="", help="e.g. 720p, 1080p")
+    p.add_argument("--mode", default="", help="kie kling: std | pro")
+    p.add_argument("--ref", action="append", default=[],
+                   help="start frame / reference image(s): local path or URL; repeatable")
     p.add_argument("--input-json", help="extra provider-specific input fields as JSON")
-    p.add_argument("--cost", type=float, default=0.0, help="estimated USD cost for this clip, for the log")
-    p.add_argument("--out", default="generations")
-    p.add_argument("--style", default="", help="style preset name, for the log")
-    p.add_argument("--timeout-min", type=int, default=15, help="max minutes to wait")
+    p.add_argument("--cost", type=float, default=0.0, help="quoted USD for this clip (goes in the sidecar log)")
+    p.add_argument("--project", default="gen")
+    p.add_argument("--desc", default="", help="short description for the filename (defaults to prompt slug)")
+    p.add_argument("--out", default="generations", help="flat output folder")
+    p.add_argument("--timeout-min", type=int, default=20)
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()
 
-    key = os.environ.get(KEYS[args.provider])
+    args.desc = slugify(args.desc or args.prompt)
+    args.project = slugify(args.project)
+    key = os.environ.get(KEYS[args.provider], "")
     if not key and not args.dry_run:
-        sys.exit(f"Missing {KEYS[args.provider]} env var for provider '{args.provider}'.")
+        sys.exit(f"Missing {KEYS[args.provider]} for provider '{args.provider}' — add it to .env / environment.")
 
-    image_ref = args.image_url
-    if image_ref and os.path.exists(image_ref):
-        image_ref = to_data_uri(image_ref)
+    ref_uris = [to_data_uri(r) if os.path.exists(r) else r for r in args.ref]
+    extra = json.loads(args.input_json) if args.input_json else {}
 
+    # Build the submit request per provider (shapes documented in models/*.md)
     if args.provider == "kie":
-        inp = {"prompt": args.prompt, "aspect_ratio": args.aspect}
-        if args.duration:
-            inp["duration"] = args.duration
+        inp = {"prompt": args.prompt, "duration": args.duration, "aspect_ratio": args.aspect}
+        if args.mode:
+            inp["mode"] = args.mode
         if args.resolution:
             inp["resolution"] = args.resolution
-        if image_ref:
-            inp["image_urls"] = [image_ref]
-        if args.input_json:
-            inp.update(json.loads(args.input_json))
+        if ref_uris:
+            inp["image_urls"] = ref_uris  # Kie needs PUBLIC urls — upload local files first (providers.md)
+        inp.update(extra)
         url, payload = "https://api.kie.ai/api/v1/jobs/createTask", {"model": args.model, "input": inp}
         headers = {"Authorization": f"Bearer {key}"}
     elif args.provider == "fal":
-        inp = {"prompt": args.prompt, "aspect_ratio": args.aspect}
-        if args.duration:
-            inp["duration"] = str(args.duration)
+        inp = {"prompt": args.prompt, "aspect_ratio": args.aspect, "duration": args.duration}
         if args.resolution:
             inp["resolution"] = args.resolution
-        if image_ref:
-            inp["image_url"] = image_ref
-        if args.input_json:
-            inp.update(json.loads(args.input_json))
+        if ref_uris:
+            inp["image_url" if len(ref_uris) == 1 else "image_urls"] = (
+                ref_uris[0] if len(ref_uris) == 1 else ref_uris)
+        inp.update(extra)
         url, payload = f"https://queue.fal.run/{args.model}", inp
         headers = {"Authorization": f"Key {key}"}
-    else:
+    elif args.provider == "google":
+        inst = {"prompt": args.prompt}
+        if args.ref:
+            local = args.ref[0]
+            if os.path.exists(local):
+                inst["image"] = {"bytesBase64Encoded": b64_file(local),
+                                 "mimeType": mimetypes.guess_type(local)[0] or "image/png"}
+            else:
+                inst["image"] = {"gcsUri": local}
+        payload = {"instances": [inst],
+                   "parameters": {"aspectRatio": args.aspect, "sampleCount": 1, **extra}}
+        url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+               f"{args.model}:predictLongRunning?key={urllib.parse.quote(key)}")
+        headers = {}
+    else:  # wavespeed
         inp = {"prompt": args.prompt, "duration": args.duration}
-        if image_ref:
-            inp["image"] = image_ref
-        if args.input_json:
-            inp.update(json.loads(args.input_json))
+        if ref_uris:
+            inp["image"] = ref_uris[0]
+        inp.update(extra)
         url, payload = f"https://api.wavespeed.ai/api/v3/{args.model}", inp
         headers = {"Authorization": f"Bearer {key}"}
 
     if args.dry_run:
-        print(f"POST {url}")
-        print(json.dumps(payload, indent=2)[:3000])
-        print(f"estimated cost: ~${args.cost:.2f}")
+        shown = url if args.provider != "google" else url.split("?")[0] + "?key=…"
+        print(f"POST {shown}")
+        body = dict(payload)
+        if args.provider == "google" and body.get("instances", [{}])[0].get("image", {}).get("bytesBase64Encoded"):
+            body = json.loads(json.dumps(body))
+            body["instances"][0]["image"]["bytesBase64Encoded"] = "<base64…>"
+        print(json.dumps(body, indent=2)[:3000])
+        print(f"quoted cost: ~${args.cost:.2f}")
         return
 
     print(f"submitting video job to {args.provider} … (typical wait: 1–6 min)", flush=True)
     resp = http_json(url, payload, headers)
     deadline = time.time() + args.timeout_min * 60
-
     video_urls = []
+
     if args.provider == "kie":
         if resp.get("code") != 200:
             sys.exit(f"Kie.ai error: {resp.get('msg') or resp}")
-        poll = f"https://api.kie.ai/api/v1/jobs/recordInfo?taskId={urllib.parse.quote(resp['data']['taskId'])}"
+        poll = ("https://api.kie.ai/api/v1/jobs/recordInfo?taskId="
+                + urllib.parse.quote(resp["data"]["taskId"]))
         while time.time() < deadline:
             d = http_json(poll, headers=headers).get("data") or {}
             if d.get("state") == "success":
-                result = json.loads(d.get("resultJson") or "{}")
-                video_urls = result.get("resultUrls") or []
+                video_urls = json.loads(d.get("resultJson") or "{}").get("resultUrls") or []
                 break
             if d.get("state") == "fail":
                 sys.exit(f"Kie.ai job failed: {d.get('failMsg')}")
@@ -146,6 +191,25 @@ def main():
                 break
             print(f"  … {s.get('status')}", flush=True)
             time.sleep(10)
+    elif args.provider == "google":
+        op = resp.get("name")
+        if not op:
+            sys.exit(f"Unexpected Google reply: {json.dumps(resp)[:800]}")
+        poll = f"https://generativelanguage.googleapis.com/v1beta/{op}?key={urllib.parse.quote(key)}"
+        while time.time() < deadline:
+            d = http_json(poll)
+            if d.get("done"):
+                if d.get("error"):
+                    sys.exit(f"Veo job failed: {d['error']}")
+                samples = (((d.get("response") or {}).get("generateVideoResponse") or {})
+                           .get("generatedSamples") or [])
+                video_urls = [s["video"]["uri"] for s in samples if (s.get("video") or {}).get("uri")]
+                # Google file URIs need the key appended to download
+                video_urls = [u + (("&" if "?" in u else "?") + "key=" + urllib.parse.quote(key))
+                              for u in video_urls]
+                break
+            print("  … running", flush=True)
+            time.sleep(15)
     else:
         if resp.get("code") not in (200, None):
             sys.exit(f"WaveSpeed error: {resp.get('message') or resp}")
@@ -161,30 +225,25 @@ def main():
             time.sleep(10)
 
     if not video_urls:
-        sys.exit(f"Timed out after {args.timeout_min} min — the job may still finish; re-poll or check the provider dashboard.")
+        sys.exit(f"Timed out after {args.timeout_min} min — the job may still finish; "
+                 "re-poll or check the provider dashboard before resubmitting (don't pay twice).")
 
-    date_dir = os.path.join(args.out, dt.date.today().isoformat())
-    os.makedirs(date_dir, exist_ok=True)
-    slug = slugify(args.prompt)
     paths = []
     for i, u in enumerate(video_urls, 1):
-        ext = os.path.splitext(urllib.parse.urlparse(u).path)[1] or ".mp4"
-        path = os.path.join(date_dir, f"{slug}-{int(time.time())}-{i}{ext}")
-        with urllib.request.urlopen(u, timeout=600) as r, open(path, "wb") as f:
-            f.write(r.read())
+        path = download(u, args.out, args.project, args.desc, i if len(video_urls) > 1 else 0)
+        sidecar = os.path.splitext(path)[0] + ".json"
+        with open(sidecar, "w") as f:
+            json.dump({
+                "model": args.model, "provider": args.provider, "type": "video",
+                "prompt": args.prompt, "refs": args.ref,
+                "params": {"aspect": args.aspect, "duration_s": args.duration,
+                           "resolution": args.resolution or None, "mode": args.mode or None},
+                "est_cost_usd": round(args.cost, 4),
+                "created": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
+            }, f, indent=2, ensure_ascii=False)
         paths.append(path)
-        print(f"saved: {path}")
-
-    os.makedirs(args.out, exist_ok=True)
-    with open(os.path.join(args.out, "log.jsonl"), "a") as f:
-        f.write(json.dumps({
-            "ts": dt.datetime.now().isoformat(timespec="seconds"),
-            "type": "video", "provider": args.provider, "model": args.model,
-            "prompt": args.prompt, "style": args.style, "aspect": args.aspect,
-            "duration_s": args.duration, "files": paths,
-            "est_cost_usd": round(args.cost, 4),
-        }, ensure_ascii=False) + "\n")
-    print(f"\ndone: {len(paths)} clip(s), estimated ~${args.cost:.2f}")
+        print(f"saved: {path}  (+ sidecar .json)")
+    print(f"\ndone: {len(paths)} clip(s), quoted ~${args.cost:.2f}")
 
 
 if __name__ == "__main__":
