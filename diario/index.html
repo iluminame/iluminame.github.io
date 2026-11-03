@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Querida yo</title>
+<meta name="description" content="Mi diario: lo que aprendo cada día.">
+<meta name="theme-color" content="#FBE6EE">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Querida yo">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@400;500;600;700&display=swap">
+<style>
+/* Cristal rosado: frosted-glass panels over soft peach, lilac and pink light. Single light look on purpose. */
+:root{
+  color-scheme: light;
+  --bg:#FBE6EE;
+  --glass:rgba(255,255,255,0.55);
+  --glass-edge:rgba(255,255,255,0.95);
+  --ink:#3A1B2B;
+  --muted:#6A4A5B;
+  --accent:#A8326A;
+  --dark:#3A1B2B;
+  --dark-ink:#FBE6EE;
+  --e1:#F7D3E2; --e2:#F0B3CC; --e3:#E48DB2; --e4:#CC5F92; --e5:#A8326A;
+  --display:"Krona One", "Arial Black", system-ui, sans-serif;
+  --body:"Quicksand", "Avenir Next", system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%;margin:0}
+body{background-color:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;font-weight:500;-webkit-text-size-adjust:100%;
+  background-image:radial-gradient(420px 360px at 0% 6%, rgba(255,196,170,0.7), transparent 70%),
+    radial-gradient(440px 380px at 100% 28%, rgba(200,170,255,0.6), transparent 70%),
+    radial-gradient(440px 360px at 25% 80%, rgba(255,160,200,0.5), transparent 70%);
+  background-attachment:fixed}
+.wrap{max-width:560px;margin:0 auto;
+  padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(48px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:18px}
+
+.glass{background:var(--glass);border:1px solid var(--glass-edge);border-radius:24px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 10px 30px -18px rgba(168,50,106,0.5)}
+
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{font-family:var(--display);font-size:1.15rem;margin:0}
+.pill{font-size:.82rem;font-weight:600;background:var(--glass);border:1px solid var(--glass-edge);border-radius:999px;padding:6px 12px}
+.hello{font-size:1.85rem;font-weight:500;line-height:1.15;margin:4px 0 0}
+.hello b{font-weight:700}
+.date-line{font-size:.92rem;color:var(--muted);margin:0}
+.date-line::first-letter{text-transform:uppercase}
+
+nav{display:flex;gap:4px;padding:4px;border-radius:999px;align-self:flex-start}
+nav button{border:0;background:transparent;color:var(--muted);font:600 .92rem var(--body);padding:9px 20px;border-radius:999px;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--dark);color:var(--dark-ink)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{-webkit-tap-highlight-color:transparent}
+
+.view{display:flex;flex-direction:column;gap:18px}
+.goal{padding:14px 18px;display:flex;flex-direction:column;gap:2px}
+.lbl{font-family:var(--display);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.goal .lbl{color:var(--accent)}
+.goal #goalText{font-size:1.05rem;font-weight:700}
+
+.q{display:flex;flex-direction:column;gap:8px}
+.q label{font-family:var(--display);font-size:.82rem}
+.q small{color:var(--muted);font-size:.84rem;margin-top:-4px}
+textarea,input[type=url],input[type=text]{font:500 1rem/1.55 var(--body);color:var(--ink);background:var(--glass);border:1px solid var(--glass-edge);border-radius:24px;padding:14px 18px;width:100%;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+textarea{resize:none;min-height:60px;overflow:hidden}
+textarea.big{min-height:112px}
+textarea::placeholder,input::placeholder{color:var(--muted);opacity:.85}
+
+.date-row{display:flex;align-items:center;gap:10px}
+input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--glass);border:1px solid var(--glass-edge);border-radius:999px;padding:6px 12px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.counter{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.stepper{display:flex;align-items:center}
+.stepper button{border:0;background:transparent;color:var(--accent);font-size:1.4rem;width:44px;height:44px;cursor:pointer;flex:none;border-radius:50%}
+.stepper input{flex:1;min-width:0;width:100%;text-align:center;border:0;background:transparent;font:400 1.3rem var(--display);color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
+
+.scale{display:flex;gap:8px}
+.scale button{flex:1;min-width:0;height:52px;border-radius:999px;border:1px solid var(--glass-edge);background:var(--glass);color:var(--ink);font:700 1rem var(--body);cursor:pointer}
+.scale button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 8px 20px -6px rgba(168,50,106,0.6)}
+.scale-ends{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)}
+
+.primary{border:0;background:var(--dark);color:var(--dark-ink);font:400 .9rem var(--display);padding:18px;border-radius:999px;cursor:pointer;text-align:center;text-decoration:none;display:block}
+.primary:disabled{opacity:.5;cursor:default}
+.ghost{border:1px solid var(--glass-edge);background:var(--glass);color:var(--ink);font:700 .9rem var(--body);padding:12px 18px;border-radius:999px;cursor:pointer;text-align:center;text-decoration:none}
+.status{font-size:.9rem;color:var(--muted);min-height:1.3em;text-align:center;margin:0}
+.note{font-size:.85rem;color:var(--muted);text-align:center;margin:0}
+.linkbtn{border:0;background:none;color:var(--muted);font:600 .85rem var(--body);text-decoration:underline;cursor:pointer;align-self:center;padding:8px}
+
+.month-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.month-head h2{font-family:var(--display);font-size:1.1rem;font-weight:400;margin:0}
+.month-head h2::first-letter{text-transform:uppercase}
+.month-head button{width:44px;height:44px;border-radius:50%;font-size:1.2rem;color:var(--ink);cursor:pointer;border:1px solid var(--glass-edge);background:var(--glass)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{padding:12px 16px}
+.stat b{display:block;font-family:var(--display);font-weight:400;font-size:1.25rem;line-height:1.3;font-variant-numeric:tabular-nums}
+.stat span{font-size:.82rem;color:var(--muted)}
+
+.panel{padding:18px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-family:var(--display);font-weight:400;font-size:1rem;margin:0}
+.panel p{margin:0}
+.sub{color:var(--muted);font-size:.92rem}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .dow{font-size:.72rem;text-align:center;color:var(--muted);font-weight:700}
+.cal .d{aspect-ratio:1;max-width:100%;border-radius:50%;background:rgba(255,255,255,0.45);font-size:.78rem;color:var(--muted);display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;border:0;font-family:var(--body);font-weight:600;padding:0}
+.cal .d.has{color:var(--ink);cursor:pointer}
+.cal .d.light{color:#fff}
+.cal .d.today{box-shadow:0 0 0 2px var(--accent)}
+.legend{display:flex;gap:6px;align-items:center;justify-content:center;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+.legend i{width:14px;height:14px;border-radius:50%;display:inline-block}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions > *{flex:1 1 160px}
+
+.entries{display:flex;flex-direction:column;gap:12px}
+.entry{padding:18px 20px;display:flex;flex-direction:column;gap:10px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.entry h3{margin:0;font-weight:700;font-size:1.05rem}
+.entry h3::first-letter{text-transform:uppercase}
+.entry p{margin:0;min-width:0;overflow-wrap:anywhere;white-space:pre-line}
+.entry .k{font-family:var(--display);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:2px}
+.meta{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:.84rem;color:var(--muted)}
+.empty{text-align:center;color:var(--muted);padding:26px 16px}
+.empty strong{display:block;font-family:var(--display);font-weight:400;font-size:.95rem;color:var(--ink);margin-bottom:6px}
+
+/* Configuración */
+.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:10px}
+.steps li{padding-left:4px}
+.steps b{font-weight:700}
+.steps a{color:var(--accent);font-weight:700}
+.code{font:500 .72rem/1.4 ui-monospace, Menlo, monospace;height:140px;overflow:auto;white-space:pre;border-radius:16px}
+.ok{color:#2F7A55}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="brand">querida yo</p>
+    <span class="pill" id="streak">0 días</span>
+  </header>
+  <div>
+    <p class="hello" id="hello">Hola, <b>Camila</b></p>
+    <p class="date-line" id="dateLine"></p>
+  </div>
+
+  <!-- CONFIGURACIÓN (primera vez) -->
+  <section id="view-setup" class="view" hidden>
+    <div class="glass panel">
+      <h3>Conecta tu hoja de Google</h3>
+      <p class="sub">Se hace una sola vez. Cada día que guardes quedará como una fila en tu propia hoja de Google Sheets. Es más fácil hacerlo desde la computadora.</p>
+      <ol class="steps">
+        <li>Abre <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> para crear una hoja nueva. Ponle de nombre <b>Querida yo</b>.</li>
+        <li>En la hoja, ve a <b>Extensiones → Apps Script</b>. Borra lo que aparece y pega este código:</li>
+      </ol>
+      <textarea id="codeBox" class="code" readonly aria-label="Código para Apps Script"></textarea>
+      <button class="ghost" id="copyCode" type="button">Copiar código</button>
+      <ol class="steps" start="3">
+        <li>Toca el ícono de guardar. Luego <b>Implementar → Nueva implementación</b>. En el engrane elige <b>Aplicación web</b>.</li>
+        <li>Deja <b>Ejecutar como: Yo</b> y en <b>Quién tiene acceso</b> elige <b>Cualquier usuario</b>. Toca <b>Implementar</b>.</li>
+        <li>Google te pedirá permiso. Toca <b>Autorizar acceso</b>, elige tu cuenta y, si dice que la app no está verificada, toca <b>Configuración avanzada → Ir a…</b> (es tu propio código).</li>
+        <li>Copia la <b>URL de la aplicación web</b> y pégala aquí:</li>
+      </ol>
+      <input type="url" id="urlInput" placeholder="https://script.google.com/macros/s/…/exec" aria-label="URL de la aplicación web" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="primary" id="connectBtn" type="button">Conectar</button>
+      <p class="status" id="setupStatus" role="status"></p>
+    </div>
+    <div class="glass panel">
+      <h3>¿Ya la conectaste en otro dispositivo?</h3>
+      <p class="sub">Pega aquí tu código de conexión (está en Ajustes del otro dispositivo).</p>
+      <input type="text" id="codeInput" placeholder="QY1:…" aria-label="Código de conexión" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="ghost" id="useCodeBtn" type="button">Usar código</button>
+      <p class="status" id="codeStatus" role="status"></p>
+    </div>
+  </section>
+
+  <nav class="glass" role="tablist" id="tabs">
+    <button id="tab-hoy" role="tab" aria-selected="true">Hoy</button>
+    <button id="tab-mes" role="tab" aria-selected="false">Mi mes</button>
+  </nav>
+
+  <!-- HOY -->
+  <section id="view-hoy" class="view">
+    <div class="glass goal" id="goalBanner" hidden>
+      <span class="lbl">Meta de hoy</span>
+      <span id="goalText"></span>
+    </div>
+
+    <div class="q">
+      <label for="fDay">Mi día</label>
+      <small>Lo que pasó, lo que sentí, lo que sea. Puedes dictarlo con el micrófono del teclado.</small>
+      <textarea id="fDay" class="big" lang="es" placeholder="Hoy…"></textarea>
+    </div>
+    <div class="q">
+      <label for="fLearned">¿Qué aprendí hoy?</label>
+      <textarea id="fLearned" lang="es" placeholder="Ej.: Cuando salgo al lote a saludar, hablo con más clientes."></textarea>
+    </div>
+    <div class="q">
+      <label for="fWorked">¿Qué funcionó y qué no?</label>
+      <textarea id="fWorked" lang="es" placeholder="Ej.: Llamar en la mañana funcionó. Esperar en el escritorio, no."></textarea>
+    </div>
+    <div class="q">
+      <label for="fGrateful">Hoy agradezco…</label>
+      <textarea id="fGrateful" lang="es" placeholder="Una cosa, grande o pequeña."></textarea>
+    </div>
+    <div class="q">
+      <label for="fTomorrow">¿Qué voy a probar mañana?</label>
+      <textarea id="fTomorrow" lang="es" placeholder="Ej.: Una hora afuera antes del almuerzo."></textarea>
+    </div>
+    <div class="q">
+      <label for="fGoal">Mi meta para mañana</label>
+      <small>Aparecerá arriba cuando abras el día de mañana.</small>
+      <textarea id="fGoal" lang="es" placeholder="Ej.: Agendar 3 citas."></textarea>
+    </div>
+
+    <div class="grid2">
+      <div class="glass counter">
+        <span class="lbl" id="lClients">Clientes</span>
+        <div class="stepper"><button type="button" data-step="fClients:-1" aria-label="Menos clientes">−</button><input id="fClients" type="number" min="0" inputmode="numeric" value="0" aria-labelledby="lClients"><button type="button" data-step="fClients:1" aria-label="Más clientes">+</button></div>
+      </div>
+      <div class="glass counter">
+        <span class="lbl" id="lSales">Ventas</span>
+        <div class="stepper"><button type="button" data-step="fSales:-1" aria-label="Menos ventas">−</button><input id="fSales" type="number" min="0" inputmode="numeric" value="0" aria-labelledby="lSales"><button type="button" data-step="fSales:1" aria-label="Más ventas">+</button></div>
+      </div>
+    </div>
+
+    <div class="q">
+      <span class="lbl">Ánimo</span>
+      <div class="scale" id="mood"></div>
+      <div class="scale-ends"><span>Pesado</span><span>En paz</span></div>
+    </div>
+    <div class="q">
+      <span class="lbl">Energía</span>
+      <div class="scale" id="energy"></div>
+      <div class="scale-ends"><span>Agotada</span><span>Con todo</span></div>
+    </div>
+
+    <div class="date-row">
+      <span class="lbl">Fecha</span>
+      <input type="date" id="fDate" aria-label="Fecha de la entrada">
+    </div>
+
+    <button class="primary" id="save" type="button">Guardar mi día</button>
+    <p class="status" id="status" role="status"></p>
+  </section>
+
+  <!-- MES -->
+  <section id="view-mes" class="view" hidden>
+    <div class="month-head">
+      <button id="prevM" aria-label="Mes anterior">‹</button>
+      <h2 id="monthTitle">Mes</h2>
+      <button id="nextM" aria-label="Mes siguiente">›</button>
+    </div>
+    <div class="stats">
+      <div class="glass stat"><b id="sDays">0</b><span>días escritos</span></div>
+      <div class="glass stat"><b id="sSales">0</b><span>ventas</span></div>
+      <div class="glass stat"><b id="sClients">0</b><span>clientes</span></div>
+      <div class="glass stat"><b id="sMood">–</b><span>ánimo promedio</span></div>
+    </div>
+    <div class="glass panel">
+      <span class="lbl">Tu ánimo día a día</span>
+      <div class="cal" id="cal"></div>
+      <div class="legend">Pesado <i style="background:var(--e1)"></i><i style="background:var(--e2)"></i><i style="background:var(--e3)"></i><i style="background:var(--e4)"></i><i style="background:var(--e5)"></i> En paz</div>
+    </div>
+
+    <div class="glass panel">
+      <h3>Mi balance del mes</h3>
+      <p class="sub">Copia tu mes y pégalo en el chat de Claude. Te devuelve cómo fue, qué se repite, tus reglas y en qué enfocarte.</p>
+      <div class="actions">
+        <button class="primary" id="copyMonth" type="button">Copiar mi mes para Claude</button>
+        <a class="ghost" id="openSheet" href="#" target="_blank" rel="noopener" hidden>Abrir mi hoja</a>
+      </div>
+      <p class="status" id="balanceStatus" role="status"></p>
+    </div>
+
+    <div class="entries" id="entries"></div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section id="view-ajustes" class="view" hidden>
+    <div class="glass panel">
+      <h3>Ajustes</h3>
+      <p class="sub" id="connInfo"></p>
+      <a class="ghost" id="openSheet2" href="#" target="_blank" rel="noopener" hidden>Abrir mi hoja de Google</a>
+      <p class="sub">Tu código de conexión sirve para abrir tu diario en otro dispositivo. Guárdalo en privado: quien lo tenga puede leer y escribir en tu diario.</p>
+      <button class="ghost" id="copyConn" type="button">Copiar código de conexión</button>
+      <button class="ghost" id="syncNow" type="button">Sincronizar ahora</button>
+      <button class="ghost" id="disconnect" type="button">Desconectar este dispositivo</button>
+      <p class="status" id="settingsStatus" role="status"></p>
+    </div>
+    <button class="linkbtn" id="backHoy" type="button">Volver a mi día</button>
+  </section>
+
+  <p class="note" id="syncNote"></p>
+  <button class="linkbtn" id="openSettings" type="button">Ajustes</button>
+</div>
+
+<script>
+/* ---------- utilidades ---------- */
+const $=id=>document.getElementById(id);
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fromIso=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const shift=(s,n)=>{const d=fromIso(s);d.setDate(d.getDate()+n);return iso(d)};
+const longDate=s=>fromIso(s).toLocaleDateString("es",{weekday:"long",day:"numeric",month:"long"});
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num=v=>v===""||v==null||isNaN(+v)?0:+v;
+const avg=(list,k)=>{const v=list.map(e=>e[k]).filter(x=>x>0);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):"–"};
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){
+  const ta=document.createElement("textarea");ta.value=t;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.opacity="0";document.body.append(ta);ta.select();
+  let ok=false;try{ok=document.execCommand("copy")}catch(x){}ta.remove();return ok}}
+
+/* ---------- estado ---------- */
+const TEXTS=["fDay","fLearned","fWorked","fGrateful","fTomorrow","fGoal"];
+let cfg=LS.get("qy.cfg",null);          // {u: url del script, k: clave, s: url de la hoja}
+let entries=LS.get("qy.entries",{});    // copia local
+let queue=LS.get("qy.queue",[]);        // fechas pendientes de subir
+let mood=0, energy=0, view=new Date(), dirty=false, current="hoy";
+view.setDate(1);
+const persist=()=>{LS.set("qy.entries",entries);LS.set("qy.queue",queue)};
+
+/* ---------- código de Apps Script ---------- */
+function scriptCode(key){return [
+"// Querida yo · conexión con Google Sheets",
+"const KEY = '"+key+"';",
+"const SHEET = 'Diario';",
+"const COLS = ['Fecha','Mi día','Qué aprendí','Qué funcionó / no','Agradezco','Qué probaré mañana','Meta para mañana','Clientes','Ventas','Ánimo (1-5)','Energía (1-5)','Actualizado'];",
+"const FIELDS = ['date','day','learned','worked','grateful','tomorrow','goal','clients','sales','mood','energy','updatedAt'];",
+"",
+"function sheet_() {",
+"  const ss = SpreadsheetApp.getActiveSpreadsheet();",
+"  let sh = ss.getSheetByName(SHEET);",
+"  if (!sh) {",
+"    sh = ss.getSheets()[0];",
+"    if (sh.getLastRow() > 0) sh = ss.insertSheet(SHEET); else sh.setName(SHEET);",
+"  }",
+"  if (sh.getLastRow() === 0) {",
+"    sh.getRange('A:A').setNumberFormat('@');",
+"    sh.getRange('L:L').setNumberFormat('@');",
+"    sh.appendRow(COLS);",
+"    sh.setFrozenRows(1);",
+"    sh.getRange(1, 1, 1, COLS.length).setFontWeight('bold').setBackground('#F7D3E2');",
+"    sh.setColumnWidths(2, 6, 280);",
+"    sh.getRange('B:G').setWrap(true);",
+"  }",
+"  return sh;",
+"}",
+"",
+"function out_(o) {",
+"  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);",
+"}",
+"",
+"function doGet(e) {",
+"  const p = (e && e.parameter) || {};",
+"  if (p.key !== KEY) return out_({ ok: false, error: 'clave' });",
+"  const sh = sheet_();",
+"  const n = sh.getLastRow();",
+"  let list = [];",
+"  if (n > 1) {",
+"    list = sh.getRange(2, 1, n - 1, FIELDS.length).getDisplayValues()",
+"      .filter(r => r[0])",
+"      .map(r => { const o = {}; FIELDS.forEach((f, i) => o[f] = r[i]); return o; });",
+"  }",
+"  return out_({ ok: true, entries: list, sheetUrl: SpreadsheetApp.getActiveSpreadsheet().getUrl() });",
+"}",
+"",
+"function doPost(e) {",
+"  let b;",
+"  try { b = JSON.parse(e.postData.contents); } catch (x) { return out_({ ok: false, error: 'formato' }); }",
+"  if (!b || b.key !== KEY) return out_({ ok: false, error: 'clave' });",
+"  const en = b.entry || {};",
+"  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(en.date || '')) return out_({ ok: false, error: 'fecha' });",
+"  const lock = LockService.getScriptLock();",
+"  lock.waitLock(10000);",
+"  try {",
+"    const sh = sheet_();",
+"    const row = FIELDS.map(f => {",
+"      let v = en[f];",
+"      if (v === undefined || v === null) return '';",
+"      if ((f === 'mood' || f === 'energy') && !v) return '';",
+"      if (typeof v === 'string' && /^[=+\\-@]/.test(v)) v = \"'\" + v;",
+"      return v;",
+"    });",
+"    const n = sh.getLastRow();",
+"    let at = -1;",
+"    if (n > 1) {",
+"      const d = sh.getRange(2, 1, n - 1, 1).getDisplayValues();",
+"      for (let i = 0; i < d.length; i++) if (d[i][0] === en.date) { at = i + 2; break; }",
+"    }",
+"    if (at > 0) sh.getRange(at, 1, 1, row.length).setValues([row]);",
+"    else sh.appendRow(row);",
+"    if (sh.getLastRow() > 2) sh.getRange(2, 1, sh.getLastRow() - 1, COLS.length).sort(1);",
+"    return out_({ ok: true });",
+"  } finally {",
+"    lock.releaseLock();",
+"  }",
+"}"].join("\n")}
+
+/* ---------- conexión con la hoja ---------- */
+function setNote(t){$("syncNote").textContent=t}
+async function apiGet(c){
+  const r=await fetch(c.u+(c.u.includes("?")?"&":"?")+"key="+encodeURIComponent(c.k),{cache:"no-store"});
+  const j=await r.json(); if(!j.ok) throw new Error(j.error||"error"); return j;
+}
+async function apiPost(c,entry){
+  const r=await fetch(c.u,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({key:c.k,entry})});
+  const j=await r.json(); if(!j.ok) throw new Error(j.error||"error"); return j;
+}
+function normalize(e){return {date:e.date,day:e.day||"",learned:e.learned||"",worked:e.worked||"",grateful:e.grateful||"",tomorrow:e.tomorrow||"",goal:e.goal||"",
+  clients:num(e.clients),sales:num(e.sales),mood:num(e.mood),energy:num(e.energy),updatedAt:e.updatedAt||""}}
+async function pull(){
+  if(!cfg)return;
+  try{
+    const j=await apiGet(cfg);
+    const fresh={};(j.entries||[]).forEach(e=>{if(/^\d{4}-\d{2}-\d{2}$/.test(e.date))fresh[e.date]=normalize(e)});
+    queue.forEach(d=>{if(entries[d])fresh[d]=entries[d]});
+    entries=fresh; if(j.sheetUrl){cfg.s=j.sheetUrl;LS.set("qy.cfg",cfg)}
+    persist(); if(!dirty)fillForm($("fDate").value||iso(new Date())); renderAll();
+    setNote(queue.length?`${queue.length} día(s) por subir a tu hoja.`:"");
+  }catch(e){setNote(navigator.onLine?"No se pudo leer tu hoja ahora. Tus días están guardados en este celular.":"Sin internet. Lo que guardes se subirá a tu hoja después.")}
+}
+async function push(){
+  if(!cfg)return false;
+  for(const d of [...queue]){
+    if(!entries[d]){queue=queue.filter(x=>x!==d);continue}
+    try{await apiPost(cfg,entries[d]);queue=queue.filter(x=>x!==d);persist()}catch(e){setNote(`${queue.length} día(s) por subir a tu hoja.`);return false}
+  }
+  setNote("");return true;
+}
+async function sync(){await push();await pull()}
+
+/* ---------- saludo ---------- */
+(()=>{const h=new Date().getHours();$("hello").innerHTML=(h<12?"Buenos días":h<19?"Buenas tardes":"Buenas noches")+",<br><b>Camila</b>"})();
+
+/* ---------- formulario ---------- */
+function autosize(t){t.style.height="auto";t.style.height=t.scrollHeight+2+"px"}
+TEXTS.forEach(id=>$(id).addEventListener("input",e=>{autosize(e.target);dirty=true}));
+function buildScale(el,get,set,name){
+  for(let i=1;i<=5;i++){const b=document.createElement("button");b.type="button";b.textContent=i;b.dataset.v=i;b.setAttribute("aria-label",name+" "+i+" de 5");
+    b.onclick=()=>{set(get()===i?0:i);paintScale(el,get());dirty=true};el.append(b)}
+}
+function paintScale(el,v){[...el.children].forEach(b=>b.setAttribute("aria-pressed",+b.dataset.v===v))}
+buildScale($("mood"),()=>mood,v=>mood=v,"Ánimo");
+buildScale($("energy"),()=>energy,v=>energy=v,"Energía");
+document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>{const[id,s]=b.dataset.step.split(":");const el=$(id);el.value=Math.max(0,(+el.value||0)+ +s);dirty=true});
+["fClients","fSales"].forEach(id=>$(id).addEventListener("input",()=>dirty=true));
+
+function fillForm(date){
+  const e=entries[date]||{};
+  $("fDate").value=date;
+  $("dateLine").textContent=date===iso(new Date())?longDate(date):"Editando: "+longDate(date);
+  $("fDay").value=e.day||"";$("fLearned").value=e.learned||"";$("fWorked").value=e.worked||"";
+  $("fGrateful").value=e.grateful||"";$("fTomorrow").value=e.tomorrow||"";$("fGoal").value=e.goal||"";
+  $("fClients").value=e.clients||0;$("fSales").value=e.sales||0;
+  mood=e.mood||0;energy=e.energy||0;
+  paintScale($("mood"),mood);paintScale($("energy"),energy);
+  const prev=entries[shift(date,-1)];
+  $("goalBanner").hidden=!(prev&&prev.goal);$("goalText").textContent=prev?.goal||"";
+  $("save").textContent=entries[date]?"Actualizar mi día":"Guardar mi día";
+  requestAnimationFrame(()=>TEXTS.forEach(id=>autosize($(id))));
+  dirty=false;
+}
+$("fDate").addEventListener("change",()=>{if($("fDate").value){fillForm($("fDate").value);$("status").textContent=""}});
+
+$("save").onclick=async()=>{
+  const date=$("fDate").value||iso(new Date());
+  if(TEXTS.every(id=>!$(id).value.trim())){$("status").textContent="Escribe al menos una frase en alguna de las preguntas.";return}
+  entries[date]={date,day:$("fDay").value.trim(),learned:$("fLearned").value.trim(),worked:$("fWorked").value.trim(),
+    grateful:$("fGrateful").value.trim(),tomorrow:$("fTomorrow").value.trim(),goal:$("fGoal").value.trim(),
+    clients:Math.max(0,+$("fClients").value||0),sales:Math.max(0,+$("fSales").value||0),mood,energy,updatedAt:new Date().toISOString()};
+  if(!queue.includes(date))queue.push(date);
+  persist();dirty=false;renderAll();$("save").textContent="Actualizar mi día";
+  $("save").disabled=true;$("status").textContent="Guardando…";
+  const ok=await push();
+  $("save").disabled=false;
+  $("status").textContent=ok?"Guardado en tu hoja. Bien hecho por darte este momento.":"Guardado en este celular. Se subirá a tu hoja cuando haya conexión.";
+};
+
+/* ---------- racha ---------- */
+function streak(){let d=iso(new Date());if(!entries[d])d=shift(d,-1);let n=0;while(entries[d]){n++;d=shift(d,-1)}return n}
+
+/* ---------- mes ---------- */
+function monthEntries(){const p=`${view.getFullYear()}-${pad(view.getMonth()+1)}`;return Object.values(entries).filter(e=>e.date.startsWith(p)).sort((a,b)=>a.date<b.date?-1:1)}
+function renderMonth(){
+  $("monthTitle").textContent=view.toLocaleDateString("es",{month:"long",year:"numeric"});
+  const list=monthEntries();
+  $("sDays").textContent=list.length;
+  $("sSales").textContent=list.reduce((a,e)=>a+(e.sales||0),0);
+  $("sClients").textContent=list.reduce((a,e)=>a+(e.clients||0),0);
+  $("sMood").textContent=avg(list,"mood");
+  const cal=$("cal");cal.innerHTML="";
+  ["L","M","M","J","V","S","D"].forEach(d=>{const s=document.createElement("div");s.className="dow";s.textContent=d;cal.append(s)});
+  const first=(view.getDay()+6)%7, days=new Date(view.getFullYear(),view.getMonth()+1,0).getDate(), today=iso(new Date());
+  for(let i=0;i<first;i++)cal.append(document.createElement("div"));
+  for(let d=1;d<=days;d++){
+    const key=`${view.getFullYear()}-${pad(view.getMonth()+1)}-${pad(d)}`, e=entries[key];
+    const c=document.createElement(e?"button":"div");
+    c.className="d"+(e?" has":"")+(e&&e.mood>=4?" light":"")+(key===today?" today":"");c.textContent=d;
+    if(e){c.type="button";c.style.background=e.mood?`var(--e${e.mood})`:"var(--e1)";c.setAttribute("aria-label","Abrir "+longDate(key));c.onclick=()=>openDay(key)}
+    cal.append(c);
+  }
+  const sheet=cfg&&cfg.s;["openSheet","openSheet2"].forEach(id=>{$(id).hidden=!sheet;if(sheet)$(id).href=sheet});
+  const box=$("entries");
+  if(!list.length){box.innerHTML=`<div class="glass empty"><strong>Este mes todavía está en blanco</strong>Escribe tu primera entrada en “Hoy”. Aquí verás cada día que guardes.</div>`;return}
+  const p=(k,label,e)=>e[k]?`<p><span class="k">${label}</span>${esc(e[k])}</p>`:"";
+  box.innerHTML=list.slice().reverse().map(e=>`<button type="button" class="glass entry" data-date="${e.date}">
+    <h3>${esc(longDate(e.date))}</h3>
+    ${p("day","Mi día",e)}${p("learned","Aprendí",e)}${p("worked","Funcionó / no funcionó",e)}${p("grateful","Agradezco",e)}${p("tomorrow","Mañana pruebo",e)}${p("goal","Meta para mañana",e)}
+    <span class="meta"><span>${e.clients||0} clientes</span><span>${e.sales||0} ventas</span>${e.mood?`<span>ánimo ${e.mood}/5</span>`:""}${e.energy?`<span>energía ${e.energy}/5</span>`:""}</span>
+  </button>`).join("");
+  box.querySelectorAll(".entry").forEach(a=>a.onclick=()=>openDay(a.dataset.date));
+}
+function openDay(key){show("hoy");fillForm(key);$("status").textContent="";window.scrollTo({top:0,behavior:"smooth"})}
+$("prevM").onclick=()=>{view.setMonth(view.getMonth()-1);$("balanceStatus").textContent="";renderMonth()};
+$("nextM").onclick=()=>{view.setMonth(view.getMonth()+1);$("balanceStatus").textContent="";renderMonth()};
+function renderAll(){const s=streak();$("streak").textContent=s===1?"1 día":`${s} días`;renderMonth()}
+
+/* ---------- balance: copiar para Claude ---------- */
+$("copyMonth").onclick=async()=>{
+  const list=monthEntries(), out=$("balanceStatus");
+  if(!list.length){out.textContent="Este mes no tiene entradas todavía.";return}
+  const mes=view.toLocaleDateString("es",{month:"long",year:"numeric"});
+  const v=x=>x==null||x===""||x===0?"-":x;
+  const data=list.map(e=>`${e.date} | mi día: ${v(e.day)} | aprendí: ${v(e.learned)} | funcionó/no: ${v(e.worked)} | agradezco: ${v(e.grateful)} | mañana pruebo: ${v(e.tomorrow)} | meta para mañana: ${v(e.goal)} | clientes ${e.clients||0}, ventas ${e.sales||0} | ánimo ${v(e.mood)}/5, energía ${v(e.energy)}/5`).join("\n");
+  const prompt=`Hazme el balance de mi mes (${mes}). Soy Camila, vendedora en un dealership de carros. Háblame en español, tono cálido, tranquilo y concreto, sin exagerar.
+
+Estructura:
+1. Cómo fue mi mes: 2-3 frases con los números (días escritos, ventas, clientes, ánimo, energía).
+2. Patrones que ves: qué se repite y qué acciones o días coinciden con más ventas o mejor ánimo. Si hay pocos datos, dilo.
+3. Lo que agradecí.
+4. Mis metas: cuántas me puse y si hay evidencia de que las cumplí.
+5. Mis reglas: 2-4 reglas cortas sacadas de lo que aprendí.
+6. Para el próximo mes: 1-2 focos concretos.
+
+No inventes datos. Mis entradas:
+${data}`;
+  out.textContent=(await copyText(prompt))?"Copiado. Abre Claude y pégalo en un chat nuevo.":"No se pudo copiar. Intenta otra vez.";
+};
+
+/* ---------- vistas ---------- */
+function show(v){
+  current=v;
+  ["hoy","mes","ajustes","setup"].forEach(n=>$("view-"+n).hidden=n!==v);
+  $("tabs").hidden=v==="setup"||v==="ajustes";
+  $("openSettings").hidden=v==="setup"||v==="ajustes";
+  $("tab-hoy").setAttribute("aria-selected",v==="hoy");$("tab-mes").setAttribute("aria-selected",v==="mes");
+  if(v==="hoy")requestAnimationFrame(()=>TEXTS.forEach(id=>autosize($(id))));
+  if(v==="mes")renderMonth();
+  if(v==="ajustes")$("connInfo").textContent=cfg?"Conectada a tu hoja de Google.":"Sin conexión configurada.";
+}
+$("tab-hoy").onclick=()=>show("hoy");
+$("tab-mes").onclick=()=>show("mes");
+$("openSettings").onclick=()=>{show("ajustes");window.scrollTo({top:0})};
+$("backHoy").onclick=()=>show("hoy");
+
+/* ---------- configuración ---------- */
+function newKey(){const a=new Uint8Array(12);crypto.getRandomValues(a);return [...a].map(b=>b.toString(16).padStart(2,"0")).join("")}
+let pendingKey=LS.get("qy.pendingKey",null); if(!pendingKey){pendingKey=newKey();LS.set("qy.pendingKey",pendingKey)}
+$("codeBox").value=scriptCode(pendingKey);
+$("copyCode").onclick=async()=>{const ok=await copyText($("codeBox").value);$("setupStatus").textContent=ok?"Código copiado.":"Selecciona el código y cópialo a mano."};
+const connCode=c=>"QY1:"+btoa(JSON.stringify({u:c.u,k:c.k}));
+function parseConn(s){try{s=s.trim();if(!s.startsWith("QY1:"))return null;const o=JSON.parse(atob(s.slice(4)));return o.u&&o.k?{u:o.u,k:o.k}:null}catch(e){return null}}
+async function connect(c,statusEl){
+  if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(c.u)){statusEl.textContent="Esa URL no parece de Apps Script. Debe empezar con https://script.google.com/";return}
+  statusEl.textContent="Conectando…";
+  try{const j=await apiGet(c);cfg={u:c.u,k:c.k,s:j.sheetUrl||""};LS.set("qy.cfg",cfg);statusEl.textContent="";
+    await sync();show("hoy");$("status").textContent="Listo, tu diario está conectado a tu hoja.";}
+  catch(e){statusEl.textContent=e.message==="clave"?"La clave no coincide. Copia otra vez el código de arriba en Apps Script y vuelve a implementar.":"No se pudo conectar. Revisa que elegiste “Cualquier usuario” y que la URL termina en /exec."}
+}
+$("connectBtn").onclick=()=>connect({u:$("urlInput").value.trim(),k:pendingKey},$("setupStatus"));
+$("useCodeBtn").onclick=()=>{const c=parseConn($("codeInput").value);if(!c){$("codeStatus").textContent="Ese código no es válido. Debe empezar con QY1:";return}connect(c,$("codeStatus"))};
+$("copyConn").onclick=async()=>{if(!cfg)return;$("settingsStatus").textContent=(await copyText(connCode(cfg)))?"Código copiado. Pégalo en tu otro dispositivo.":"No se pudo copiar."};
+$("syncNow").onclick=async()=>{$("settingsStatus").textContent="Sincronizando…";await sync();$("settingsStatus").textContent=queue.length?"Algunos días siguen pendientes de subir.":"Todo al día con tu hoja."};
+let confirmDisc=false;
+$("disconnect").onclick=()=>{
+  if(!confirmDisc){confirmDisc=true;$("disconnect").textContent="Toca otra vez para confirmar";$("settingsStatus").textContent=queue.length?"Ojo: tienes días sin subir; se perderán en este dispositivo.":"Tus días siguen en tu hoja de Google.";return}
+  LS.del("qy.cfg");LS.del("qy.entries");LS.del("qy.queue");cfg=null;entries={};queue=[];confirmDisc=false;$("disconnect").textContent="Desconectar este dispositivo";$("settingsStatus").textContent="";
+  fillForm(iso(new Date()));renderAll();show("setup");
+};
+
+/* enlace con código: …/diario/#c=QY1:… */
+(()=>{const m=location.hash.match(/^#c=(.+)$/);if(!m)return;const c=parseConn(decodeURIComponent(m[1]));history.replaceState(null,"",location.pathname);if(c&&!cfg)connect(c,$("codeStatus"))})();
+
+/* ---------- arranque ---------- */
+fillForm(iso(new Date()));renderAll();
+show(cfg?"hoy":"setup");
+if(cfg)sync();
+window.addEventListener("online",()=>{if(cfg)sync()});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&cfg)sync()});
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
