@@ -207,6 +207,11 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
       <button class="ghost" id="useCodeBtn" type="button">Usar código</button>
       <p class="status" id="codeStatus" role="status"></p>
     </div>
+    <div class="glass panel">
+      <h3>¿Ahora no puedes?</h3>
+      <p class="sub">Empieza a escribir desde ya. Tus días se guardan en este celular y se suben solos a tu hoja cuando la conectes (en Ajustes).</p>
+      <button class="ghost" id="skipSetup" type="button">Empezar sin conectar</button>
+    </div>
   </section>
 
   <nav class="glass" role="tablist" id="tabs">
@@ -382,6 +387,7 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
     <div class="glass panel">
       <h3>Ajustes</h3>
       <p class="sub" id="connInfo"></p>
+      <button class="primary" id="goSetup" type="button" hidden>Conectar mi hoja de Google</button>
       <a class="ghost" id="openSheet2" href="#" target="_blank" rel="noopener" hidden>Abrir mi hoja de Google</a>
       <p class="sub">Tu código de conexión sirve para abrir tu diario en otro dispositivo. Guárdalo en privado: quien lo tenga puede leer y escribir en tu diario.</p>
       <button class="ghost" id="copyConn" type="button">Copiar código de conexión</button>
@@ -426,6 +432,7 @@ let cfg=LS.get("qy.cfg",null);          // {u: url del script, k: clave, s: url 
 let entries=LS.get("qy.entries",{});
 let queue=LS.get("qy.queue",[]);
 let mood=0, energy=0, view=new Date(), dirty=false;
+let localMode=LS.get("qy.local",false);
 view.setDate(1);
 const persist=()=>{LS.set("qy.entries",entries);LS.set("qy.queue",queue)};
 
@@ -623,7 +630,7 @@ $("save").onclick=async()=>{
   $("save").disabled=true;$("status").textContent="Guardando…";
   const ok=await push();
   $("save").disabled=false;
-  $("status").textContent=ok?"Guardado. La vendedora cerró su turno y tú te diste este momento.":"Guardado en este celular. Se subirá a tu hoja cuando haya conexión.";
+  $("status").textContent=ok?"Guardado. La vendedora cerró su turno y tú te diste este momento.":(cfg?"Guardado en este celular. Se subirá a tu hoja cuando haya conexión.":"Guardado en este celular. Cuando conectes tu hoja en Ajustes, se sube solo.");
 };
 
 /* ---------- racha ---------- */
@@ -712,17 +719,21 @@ ${data}`;
 function show(v){
   ["hoy","mes","ajustes","setup"].forEach(n=>$("view-"+n).hidden=n!==v);
   $("tabs").hidden=v==="setup"||v==="ajustes";
-  $("openSettings").hidden=v==="setup"||v==="ajustes";
+  $("openSettings").hidden=v==="ajustes"||(v==="setup"&&!localMode);
+  $("openSettings").textContent=v==="setup"?"Volver a mi diario":"Ajustes";
   $("tab-hoy").setAttribute("aria-selected",v==="hoy");$("tab-mes").setAttribute("aria-selected",v==="mes");
   document.body.classList.toggle("yo",v==="hoy"&&!$("stepYo").hidden);
   if(v==="hoy")autosizeAll();
   if(v==="mes")renderMonth();
-  if(v==="ajustes"){$("connInfo").textContent=cfg?"Conectada a tu hoja de Google.":"Sin conexión configurada.";$("updatePanel").hidden=!(cfg&&cfg.old);if(cfg)$("codeBox2").value=scriptCode(cfg.k)}
+  if(v==="ajustes"){$("connInfo").textContent=cfg?"Conectada a tu hoja de Google.":"Todavía no conectas tu hoja. Tus días están guardados solo en este celular.";
+    $("goSetup").hidden=!!cfg;["copyConn","syncNow","disconnect"].forEach(id=>$(id).hidden=!cfg);$("updatePanel").hidden=!(cfg&&cfg.old);if(cfg)$("codeBox2").value=scriptCode(cfg.k)}
 }
 $("tab-hoy").onclick=()=>show("hoy");
 $("tab-mes").onclick=()=>show("mes");
-$("openSettings").onclick=()=>{show("ajustes");window.scrollTo({top:0})};
+$("openSettings").onclick=()=>{show(!$("view-setup").hidden?"hoy":"ajustes");window.scrollTo({top:0})};
 $("backHoy").onclick=()=>show("hoy");
+$("goSetup").onclick=()=>{show("setup");window.scrollTo({top:0})};
+$("skipSetup").onclick=()=>{localMode=true;LS.set("qy.local",true);show("hoy");window.scrollTo({top:0});$("status").textContent="Puedes escribir desde ya. Tus días quedan en este celular hasta que conectes tu hoja."};
 
 /* ---------- configuración ---------- */
 function newKey(){const a=new Uint8Array(12);crypto.getRandomValues(a);return [...a].map(b=>b.toString(16).padStart(2,"0")).join("")}
@@ -735,7 +746,7 @@ function parseConn(s){try{s=s.trim();if(!s.startsWith("QY1:"))return null;const 
 async function connect(c,statusEl){
   if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(c.u)){statusEl.textContent="Esa URL no parece de Apps Script. Debe empezar con https://script.google.com/";return}
   statusEl.textContent="Conectando…";
-  try{const j=await apiGet(c);cfg={u:c.u,k:c.k,s:j.sheetUrl||"",old:j.v!==2};LS.set("qy.cfg",cfg);statusEl.textContent="";
+  try{const j=await apiGet(c);cfg={u:c.u,k:c.k,s:j.sheetUrl||"",old:j.v!==2};LS.set("qy.cfg",cfg);statusEl.textContent="";localMode=false;LS.del("qy.local");
     await sync();show("hoy");$("status").textContent="Listo, tu diario está conectado a tu hoja.";}
   catch(e){statusEl.textContent=e.message==="clave"?"La clave no coincide. Copia otra vez el código de arriba en Apps Script y vuelve a implementar.":"No se pudo conectar. Revisa que elegiste “Cualquier usuario” y que la URL termina en /exec."}
 }
@@ -756,7 +767,7 @@ $("disconnect").onclick=()=>{
 
 /* ---------- arranque ---------- */
 fillForm(iso(new Date()));renderAll();step("role");
-show(cfg?"hoy":"setup");
+show(cfg||localMode?"hoy":"setup");
 if(cfg)sync();
 window.addEventListener("online",()=>{if(cfg)sync()});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&cfg)sync()});
