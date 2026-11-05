@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Querida yo</title>
-<meta name="description" content="Mi diario: lo que aprendo cada día.">
+<meta name="description" content="Mi diario: la vendedora y yo, cada una en su espacio.">
 <meta name="theme-color" content="#FBE6EE">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -16,7 +16,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@400;500;600;700&display=swap">
 <style>
-/* Cristal rosado: frosted-glass panels over soft peach, lilac and pink light. Single light look on purpose. */
+/* Cristal rosado: frosted-glass panels over soft peach, lilac and pink light. Single light look on purpose.
+   Two spaces: "La vendedora" (the role, a cooler lilac-tinted panel) and "Yo" (warm, soft). */
 :root{
   color-scheme: light;
   --bg:#FBE6EE;
@@ -25,6 +26,8 @@
   --ink:#3A1B2B;
   --muted:#6A4A5B;
   --accent:#A8326A;
+  --role:#4B3A6E;         /* tinta de la vendedora */
+  --role-glass:rgba(236,230,255,0.62);
   --dark:#3A1B2B;
   --dark-ink:#FBE6EE;
   --e1:#F7D3E2; --e2:#F0B3CC; --e3:#E48DB2; --e4:#CC5F92; --e5:#A8326A;
@@ -38,7 +41,8 @@ body{background-color:var(--bg);color:var(--ink);font-family:var(--body);font-si
   background-image:radial-gradient(420px 360px at 0% 6%, rgba(255,196,170,0.7), transparent 70%),
     radial-gradient(440px 380px at 100% 28%, rgba(200,170,255,0.6), transparent 70%),
     radial-gradient(440px 360px at 25% 80%, rgba(255,160,200,0.5), transparent 70%);
-  background-attachment:fixed}
+  background-attachment:fixed;transition:background-color .6s ease}
+body.yo{background-color:#FDEBEA}
 .wrap{max-width:560px;margin:0 auto;
   padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(48px + env(safe-area-inset-bottom,0px));
   padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));
@@ -61,27 +65,45 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{
 button{-webkit-tap-highlight-color:transparent}
 
 .view{display:flex;flex-direction:column;gap:18px}
-.goal{padding:14px 18px;display:flex;flex-direction:column;gap:2px}
 .lbl{font-family:var(--display);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.goal .lbl{color:var(--accent)}
+
+/* pasos: turno → yo */
+.steps-bar{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border-radius:999px}
+.steps-bar button{border:0;border-radius:999px;background:transparent;color:var(--muted);font:600 .88rem var(--body);padding:10px 8px;cursor:pointer}
+.steps-bar button[aria-current="step"]{background:#fff;color:var(--ink);box-shadow:0 4px 14px -8px rgba(58,27,43,.5)}
+.space-head{display:flex;flex-direction:column;gap:2px}
+.space-head h2{font-family:var(--display);font-weight:400;font-size:1.05rem;margin:0}
+.space-head p{margin:0;color:var(--muted);font-size:.92rem}
+.role .space-head h2{color:var(--role)}
+
+.goal{padding:14px 18px;display:flex;flex-direction:column;gap:2px}
+.goal .lbl{color:var(--role)}
 .goal #goalText{font-size:1.05rem;font-weight:700}
 
 .q{display:flex;flex-direction:column;gap:8px}
 .q label{font-family:var(--display);font-size:.82rem}
+.role .q label{color:var(--role)}
 .q small{color:var(--muted);font-size:.84rem;margin-top:-4px}
 textarea,input[type=url],input[type=text]{font:500 1rem/1.55 var(--body);color:var(--ink);background:var(--glass);border:1px solid var(--glass-edge);border-radius:24px;padding:14px 18px;width:100%;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.role textarea,.role .counter{background:var(--role-glass)}
 textarea{resize:none;min-height:60px;overflow:hidden}
 textarea.big{min-height:112px}
 textarea::placeholder,input::placeholder{color:var(--muted);opacity:.85}
+.nudge{font-size:.85rem;color:var(--accent);margin:-2px 0 0}
 
 .date-row{display:flex;align-items:center;gap:10px}
 input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--glass);border:1px solid var(--glass-edge);border-radius:999px;padding:6px 12px}
 
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.counter{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
-.stepper{display:flex;align-items:center}
-.stepper button{border:0;background:transparent;color:var(--accent);font-size:1.4rem;width:44px;height:44px;cursor:pointer;flex:none;border-radius:50%}
-.stepper input{flex:1;min-width:0;width:100%;text-align:center;border:0;background:transparent;font:400 1.3rem var(--display);color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.counter{padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;border-radius:20px}
+.counter .lbl{color:var(--role);font-size:.52rem}
+.stepper{display:flex;align-items:center;width:100%}
+.stepper button{border:0;background:transparent;color:var(--role);font-size:1.2rem;width:32px;height:44px;cursor:pointer;flex:none;border-radius:50%}
+.stepper input{flex:1;min-width:0;width:100%;text-align:center;border:0;background:transparent;font:400 1rem var(--display);color:var(--ink);font-variant-numeric:tabular-nums;padding:0;-moz-appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+.threshold{padding:18px;display:flex;flex-direction:column;gap:10px;border-radius:28px;background:rgba(255,255,255,0.72)}
+.threshold h3{font-family:var(--display);font-weight:400;font-size:.9rem;margin:0}
 
 .scale{display:flex;gap:8px}
 .scale button{flex:1;min-width:0;height:52px;border-radius:999px;border:1px solid var(--glass-edge);background:var(--glass);color:var(--ink);font:700 1rem var(--body);cursor:pointer}
@@ -89,6 +111,7 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
 .scale-ends{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)}
 
 .primary{border:0;background:var(--dark);color:var(--dark-ink);font:400 .9rem var(--display);padding:18px;border-radius:999px;cursor:pointer;text-align:center;text-decoration:none;display:block}
+.primary.role-btn{background:var(--role)}
 .primary:disabled{opacity:.5;cursor:default}
 .ghost{border:1px solid var(--glass-edge);background:var(--glass);color:var(--ink);font:700 .9rem var(--body);padding:12px 18px;border-radius:999px;cursor:pointer;text-align:center;text-decoration:none}
 .status{font-size:.9rem;color:var(--muted);min-height:1.3em;text-align:center;margin:0}
@@ -109,6 +132,11 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
 .panel h3{font-family:var(--display);font-weight:400;font-size:1rem;margin:0}
 .panel p{margin:0}
 .sub{color:var(--muted);font-size:.92rem}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.compare div{background:rgba(255,255,255,.55);border-radius:18px;padding:12px 14px}
+.compare b{display:block;font-family:var(--display);font-weight:400;font-size:1.3rem}
+.compare span{font-size:.82rem;color:var(--muted)}
+.verdict{font-weight:600}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .cal .dow{font-size:.72rem;text-align:center;color:var(--muted);font-weight:700}
 .cal .d{aspect-ratio:1;max-width:100%;border-radius:50%;background:rgba(255,255,255,0.45);font-size:.78rem;color:var(--muted);display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;border:0;font-family:var(--body);font-weight:600;padding:0}
@@ -124,8 +152,10 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
 .entry{padding:18px 20px;display:flex;flex-direction:column;gap:10px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
 .entry h3{margin:0;font-weight:700;font-size:1.05rem}
 .entry h3::first-letter{text-transform:uppercase}
+.entry h4{margin:4px 0 0;font-family:var(--display);font-weight:400;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase}
+.entry h4.r{color:var(--role)} .entry h4.y{color:var(--accent)}
 .entry p{margin:0;min-width:0;overflow-wrap:anywhere;white-space:pre-line}
-.entry .k{font-family:var(--display);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:2px}
+.entry .k{font-size:.78rem;font-weight:700;color:var(--muted);display:block}
 .meta{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:.84rem;color:var(--muted)}
 .empty{text-align:center;color:var(--muted);padding:26px 16px}
 .empty strong{display:block;font-family:var(--display);font-weight:400;font-size:.95rem;color:var(--ink);margin-bottom:6px}
@@ -136,7 +166,6 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
 .steps b{font-weight:700}
 .steps a{color:var(--accent);font-weight:700}
 .code{font:500 .72rem/1.4 ui-monospace, Menlo, monospace;height:140px;overflow:auto;white-space:pre;border-radius:16px}
-.ok{color:#2F7A55}
 </style>
 </head>
 <body>
@@ -187,66 +216,108 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
 
   <!-- HOY -->
   <section id="view-hoy" class="view">
-    <div class="glass goal" id="goalBanner" hidden>
-      <span class="lbl">Meta de hoy</span>
-      <span id="goalText"></span>
+    <div class="glass steps-bar" aria-label="Pasos de hoy">
+      <button type="button" id="goRole" aria-current="step">1 · La vendedora</button>
+      <button type="button" id="goYo">2 · Yo</button>
     </div>
 
-    <div class="q">
-      <label for="fDay">Mi día</label>
-      <small>Lo que pasó, lo que sentí, lo que sea. Puedes dictarlo con el micrófono del teclado.</small>
-      <textarea id="fDay" class="big" lang="es" placeholder="Hoy…"></textarea>
-    </div>
-    <div class="q">
-      <label for="fLearned">¿Qué aprendí hoy?</label>
-      <textarea id="fLearned" lang="es" placeholder="Ej.: Cuando salgo al lote a saludar, hablo con más clientes."></textarea>
-    </div>
-    <div class="q">
-      <label for="fWorked">¿Qué funcionó y qué no?</label>
-      <textarea id="fWorked" lang="es" placeholder="Ej.: Llamar en la mañana funcionó. Esperar en el escritorio, no."></textarea>
-    </div>
-    <div class="q">
-      <label for="fGrateful">Hoy agradezco…</label>
-      <textarea id="fGrateful" lang="es" placeholder="Una cosa, grande o pequeña."></textarea>
-    </div>
-    <div class="q">
-      <label for="fTomorrow">¿Qué voy a probar mañana?</label>
-      <textarea id="fTomorrow" lang="es" placeholder="Ej.: Una hora afuera antes del almuerzo."></textarea>
-    </div>
-    <div class="q">
-      <label for="fGoal">Mi meta para mañana</label>
-      <small>Aparecerá arriba cuando abras el día de mañana.</small>
-      <textarea id="fGoal" lang="es" placeholder="Ej.: Agendar 3 citas."></textarea>
-    </div>
-
-    <div class="grid2">
-      <div class="glass counter">
-        <span class="lbl" id="lClients">Clientes</span>
-        <div class="stepper"><button type="button" data-step="fClients:-1" aria-label="Menos clientes">−</button><input id="fClients" type="number" min="0" inputmode="numeric" value="0" aria-labelledby="lClients"><button type="button" data-step="fClients:1" aria-label="Más clientes">+</button></div>
+    <!-- PASO 1: EL ROL -->
+    <div id="stepRole" class="view role">
+      <div class="space-head">
+        <h2>La vendedora</h2>
+        <p>Su turno. Escríbelo como si hablaras de ella.</p>
       </div>
-      <div class="glass counter">
-        <span class="lbl" id="lSales">Ventas</span>
-        <div class="stepper"><button type="button" data-step="fSales:-1" aria-label="Menos ventas">−</button><input id="fSales" type="number" min="0" inputmode="numeric" value="0" aria-labelledby="lSales"><button type="button" data-step="fSales:1" aria-label="Más ventas">+</button></div>
+
+      <div class="glass goal" id="goalBanner" hidden>
+        <span class="lbl">Su meta para hoy</span>
+        <span id="goalText"></span>
       </div>
+
+      <div class="grid3">
+        <div class="glass counter">
+          <span class="lbl" id="lClients">Clientes</span>
+          <div class="stepper"><button type="button" data-step="fClients:-1" aria-label="Menos clientes">−</button><input id="fClients" type="number" min="0" inputmode="numeric" value="0" aria-labelledby="lClients"><button type="button" data-step="fClients:1" aria-label="Más clientes">+</button></div>
+        </div>
+        <div class="glass counter">
+          <span class="lbl" id="lFollow">Seguimientos</span>
+          <div class="stepper"><button type="button" data-step="fFollow:-1" aria-label="Menos seguimientos">−</button><input id="fFollow" type="number" min="0" inputmode="numeric" value="0" aria-labelledby="lFollow"><button type="button" data-step="fFollow:1" aria-label="Más seguimientos">+</button></div>
+        </div>
+        <div class="glass counter">
+          <span class="lbl" id="lSales">Ventas</span>
+          <div class="stepper"><button type="button" data-step="fSales:-1" aria-label="Menos ventas">−</button><input id="fSales" type="number" min="0" inputmode="numeric" value="0" aria-labelledby="lSales"><button type="button" data-step="fSales:1" aria-label="Más ventas">+</button></div>
+        </div>
+      </div>
+
+      <div class="q">
+        <label for="fEffort">Lo que hizo hoy</label>
+        <small>Lo que estuvo en sus manos, aunque no se haya vendido nada.</small>
+        <textarea id="fEffort" lang="es" placeholder="Ej.: Salió al lote dos veces, llamó a 5 clientes, mandó 3 seguimientos."></textarea>
+      </div>
+      <div class="q">
+        <label for="fWorked">¿Qué funcionó y qué no?</label>
+        <textarea id="fWorked" lang="es" placeholder="Ej.: Llamar en la mañana funcionó. Esperar en el escritorio, no."></textarea>
+      </div>
+      <div class="q">
+        <label for="fLearned">¿Qué aprendió?</label>
+        <textarea id="fLearned" lang="es" placeholder="Ej.: Afuera conversa con más gente."></textarea>
+      </div>
+      <div class="q">
+        <label for="fGoal">Mañana, la vendedora va a…</label>
+        <small>Aparecerá arriba mañana.</small>
+        <textarea id="fGoal" lang="es" placeholder="Ej.: Agendar 3 citas."></textarea>
+      </div>
+
+      <div class="threshold glass">
+        <h3>Antes de cerrar el turno</h3>
+        <label for="fCarry" class="sub">¿Qué del trabajo te estás llevando a casa? Escríbelo y déjalo aquí.</label>
+        <textarea id="fCarry" lang="es" placeholder="Ej.: La frustración de un día sin ventas."></textarea>
+      </div>
+      <button class="primary role-btn" id="closeShift" type="button">Cierro el turno</button>
     </div>
 
-    <div class="q">
-      <span class="lbl">Ánimo</span>
-      <div class="scale" id="mood"></div>
-      <div class="scale-ends"><span>Pesado</span><span>En paz</span></div>
-    </div>
-    <div class="q">
-      <span class="lbl">Energía</span>
-      <div class="scale" id="energy"></div>
-      <div class="scale-ends"><span>Agotada</span><span>Con todo</span></div>
-    </div>
+    <!-- PASO 2: YO -->
+    <div id="stepYo" class="view" hidden>
+      <div class="space-head">
+        <h2>Yo</h2>
+        <p>Ahora tú, Camila. Aquí no se habla de ventas.</p>
+      </div>
+      <div class="q">
+        <label for="fFeel">¿Cómo me siento?</label>
+        <small>Lo que sea, sin explicarlo. Puedes dictarlo con el micrófono del teclado.</small>
+        <textarea id="fFeel" class="big" lang="es" placeholder="Hoy me siento…"></textarea>
+        <p class="nudge" id="nudgeFeel" hidden>Se coló la vendedora. No pasa nada: ¿qué sientes tú, más allá de las ventas?</p>
+      </div>
+      <div class="q">
+        <label for="fNeed">¿Qué necesito hoy?</label>
+        <small>En vez de "sé fuerte".</small>
+        <textarea id="fNeed" lang="es" placeholder="Descansar, un abrazo, hablar con alguien, no hacer nada…"></textarea>
+        <p class="nudge" id="nudgeNeed" hidden>Se coló el trabajo. ¿Qué necesitas tú, no ella?</p>
+      </div>
+      <div class="q">
+        <label for="fForMe">Algo que hice por mí</label>
+        <textarea id="fForMe" lang="es" placeholder="Por pequeño que sea."></textarea>
+      </div>
+      <div class="q">
+        <label for="fGrateful">Hoy agradezco…</label>
+        <textarea id="fGrateful" lang="es" placeholder="Una cosa, grande o pequeña."></textarea>
+      </div>
+      <div class="q">
+        <span class="lbl">Ánimo</span>
+        <div class="scale" id="mood"></div>
+        <div class="scale-ends"><span>Pesado</span><span>En paz</span></div>
+      </div>
+      <div class="q">
+        <span class="lbl">Energía</span>
+        <div class="scale" id="energy"></div>
+        <div class="scale-ends"><span>Agotada</span><span>Con todo</span></div>
+      </div>
 
-    <div class="date-row">
-      <span class="lbl">Fecha</span>
-      <input type="date" id="fDate" aria-label="Fecha de la entrada">
+      <div class="date-row">
+        <span class="lbl">Fecha</span>
+        <input type="date" id="fDate" aria-label="Fecha de la entrada">
+      </div>
+      <button class="primary" id="save" type="button">Guardar mi día</button>
     </div>
-
-    <button class="primary" id="save" type="button">Guardar mi día</button>
     <p class="status" id="status" role="status"></p>
   </section>
 
@@ -260,9 +331,19 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
     <div class="stats">
       <div class="glass stat"><b id="sDays">0</b><span>días escritos</span></div>
       <div class="glass stat"><b id="sSales">0</b><span>ventas</span></div>
-      <div class="glass stat"><b id="sClients">0</b><span>clientes</span></div>
+      <div class="glass stat"><b id="sFollow">0</b><span>seguimientos</span></div>
       <div class="glass stat"><b id="sMood">–</b><span>ánimo promedio</span></div>
     </div>
+
+    <div class="glass panel">
+      <h3>¿Mi ánimo depende de las ventas?</h3>
+      <div class="compare">
+        <div><b id="moodSale">–</b><span>ánimo en días con venta</span></div>
+        <div><b id="moodNoSale">–</b><span>ánimo en días sin venta</span></div>
+      </div>
+      <p class="verdict" id="verdict"></p>
+    </div>
+
     <div class="glass panel">
       <span class="lbl">Tu ánimo día a día</span>
       <div class="cal" id="cal"></div>
@@ -271,7 +352,7 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
 
     <div class="glass panel">
       <h3>Mi balance del mes</h3>
-      <p class="sub">Copia tu mes y pégalo en el chat de Claude. Te devuelve cómo fue, qué se repite, tus reglas y en qué enfocarte.</p>
+      <p class="sub">Copia tu mes y pégalo en el chat de Claude. Te devuelve cómo le fue a la vendedora, cómo estuviste tú, y si el rol se está llevando tu ánimo.</p>
       <div class="actions">
         <button class="primary" id="copyMonth" type="button">Copiar mi mes para Claude</button>
         <a class="ghost" id="openSheet" href="#" target="_blank" rel="noopener" hidden>Abrir mi hoja</a>
@@ -284,6 +365,20 @@ input[type=date]{font:600 .9rem var(--body);color:var(--muted);background:var(--
 
   <!-- AJUSTES -->
   <section id="view-ajustes" class="view" hidden>
+    <div class="glass panel" id="updatePanel" hidden>
+      <h3>Actualiza el código de tu hoja</h3>
+      <p class="sub">Tu diario ahora tiene dos espacios y tu hoja necesita el código nuevo para guardar todas las preguntas. Mientras tanto, lo nuevo queda guardado en este celular.</p>
+      <ol class="steps">
+        <li>Abre tu hoja y ve a <b>Extensiones → Apps Script</b>.</li>
+        <li>Borra todo, pega este código y toca guardar:</li>
+      </ol>
+      <textarea id="codeBox2" class="code" readonly aria-label="Código nuevo para Apps Script"></textarea>
+      <button class="ghost" id="copyCode2" type="button">Copiar código</button>
+      <ol class="steps" start="3">
+        <li><b>Implementar → Administrar implementaciones</b>, toca el lápiz, en <b>Versión</b> elige <b>Nueva versión</b> y toca <b>Implementar</b>. La URL no cambia.</li>
+        <li>Vuelve aquí y toca <b>Sincronizar ahora</b>.</li>
+      </ol>
+    </div>
     <div class="glass panel">
       <h3>Ajustes</h3>
       <p class="sub" id="connInfo"></p>
@@ -312,27 +407,41 @@ const shift=(s,n)=>{const d=fromIso(s);d.setDate(d.getDate()+n);return iso(d)};
 const longDate=s=>fromIso(s).toLocaleDateString("es",{weekday:"long",day:"numeric",month:"long"});
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const num=v=>v===""||v==null||isNaN(+v)?0:+v;
-const avg=(list,k)=>{const v=list.map(e=>e[k]).filter(x=>x>0);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):"–"};
+const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){
   const ta=document.createElement("textarea");ta.value=t;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.opacity="0";document.body.append(ta);ta.select();
   let ok=false;try{ok=document.execCommand("copy")}catch(x){}ta.remove();return ok}}
 
+/* ---------- campos ---------- */
+// id del input → campo guardado
+const ROLE_TEXT={fEffort:"effort",fWorked:"worked",fLearned:"learned",fGoal:"goal",fCarry:"carry"};
+const YO_TEXT={fFeel:"feel",fNeed:"need",fForMe:"forme",fGrateful:"grateful"};
+const ALL_TEXT={...ROLE_TEXT,...YO_TEXT};
+const NUMS={fClients:"clients",fFollow:"followups",fSales:"sales"};
+const TEXT_FIELDS=["effort","worked","learned","goal","carry","feel","need","forme","grateful","day","tomorrow"];
+const NUM_FIELDS=["clients","followups","sales","mood","energy"];
+
 /* ---------- estado ---------- */
-const TEXTS=["fDay","fLearned","fWorked","fGrateful","fTomorrow","fGoal"];
-let cfg=LS.get("qy.cfg",null);          // {u: url del script, k: clave, s: url de la hoja}
-let entries=LS.get("qy.entries",{});    // copia local
-let queue=LS.get("qy.queue",[]);        // fechas pendientes de subir
-let mood=0, energy=0, view=new Date(), dirty=false, current="hoy";
+let cfg=LS.get("qy.cfg",null);          // {u: url del script, k: clave, s: url de la hoja, old: script viejo}
+let entries=LS.get("qy.entries",{});
+let queue=LS.get("qy.queue",[]);
+let mood=0, energy=0, view=new Date(), dirty=false;
 view.setDate(1);
 const persist=()=>{LS.set("qy.entries",entries);LS.set("qy.queue",queue)};
 
-/* ---------- código de Apps Script ---------- */
+/* ---------- código de Apps Script (v2: columnas por encabezado) ---------- */
 function scriptCode(key){return [
-"// Querida yo · conexión con Google Sheets",
+"// Querida yo · conexión con Google Sheets (v2)",
 "const KEY = '"+key+"';",
 "const SHEET = 'Diario';",
-"const COLS = ['Fecha','Mi día','Qué aprendí','Qué funcionó / no','Agradezco','Qué probaré mañana','Meta para mañana','Clientes','Ventas','Ánimo (1-5)','Energía (1-5)','Actualizado'];",
-"const FIELDS = ['date','day','learned','worked','grateful','tomorrow','goal','clients','sales','mood','energy','updatedAt'];",
+"const COLS = [",
+"  ['date', 'Fecha'], ['clients', 'Clientes'], ['followups', 'Seguimientos'], ['sales', 'Ventas'],",
+"  ['effort', 'Lo que hizo'], ['worked', 'Qué funcionó / no'], ['learned', 'Qué aprendí'], ['goal', 'Meta para mañana'],",
+"  ['carry', 'Lo que me llevo a casa'], ['feel', 'Cómo me siento'], ['need', 'Qué necesito'], ['forme', 'Algo que hice por mí'],",
+"  ['grateful', 'Agradezco'], ['mood', 'Ánimo (1-5)'], ['energy', 'Energía (1-5)'],",
+"  ['day', 'Mi día'], ['tomorrow', 'Qué probaré mañana'], ['updatedAt', 'Actualizado']",
+"];",
+"const BY_LABEL = {}; COLS.forEach(c => BY_LABEL[c[1]] = c[0]);",
 "",
 "function sheet_() {",
 "  const ss = SpreadsheetApp.getActiveSpreadsheet();",
@@ -342,15 +451,19 @@ function scriptCode(key){return [
 "    if (sh.getLastRow() > 0) sh = ss.insertSheet(SHEET); else sh.setName(SHEET);",
 "  }",
 "  if (sh.getLastRow() === 0) {",
-"    sh.getRange('A:A').setNumberFormat('@');",
-"    sh.getRange('L:L').setNumberFormat('@');",
-"    sh.appendRow(COLS);",
+"    sh.appendRow(COLS.map(c => c[1]));",
 "    sh.setFrozenRows(1);",
 "    sh.getRange(1, 1, 1, COLS.length).setFontWeight('bold').setBackground('#F7D3E2');",
-"    sh.setColumnWidths(2, 6, 280);",
-"    sh.getRange('B:G').setWrap(true);",
 "  }",
-"  return sh;",
+"  const header = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0];",
+"  COLS.forEach(c => {",
+"    if (header.indexOf(c[1]) < 0) {",
+"      header.push(c[1]);",
+"      sh.getRange(1, header.length).setValue(c[1]).setFontWeight('bold').setBackground('#F7D3E2');",
+"    }",
+"  });",
+"  ['Fecha', 'Actualizado'].forEach(l => sh.getRange(1, header.indexOf(l) + 1, sh.getMaxRows(), 1).setNumberFormat('@'));",
+"  return { sh: sh, header: header };",
 "}",
 "",
 "function out_(o) {",
@@ -360,15 +473,16 @@ function scriptCode(key){return [
 "function doGet(e) {",
 "  const p = (e && e.parameter) || {};",
 "  if (p.key !== KEY) return out_({ ok: false, error: 'clave' });",
-"  const sh = sheet_();",
-"  const n = sh.getLastRow();",
+"  const t = sheet_();",
+"  const n = t.sh.getLastRow();",
+"  const di = t.header.indexOf('Fecha');",
 "  let list = [];",
 "  if (n > 1) {",
-"    list = sh.getRange(2, 1, n - 1, FIELDS.length).getDisplayValues()",
-"      .filter(r => r[0])",
-"      .map(r => { const o = {}; FIELDS.forEach((f, i) => o[f] = r[i]); return o; });",
+"    list = t.sh.getRange(2, 1, n - 1, t.header.length).getDisplayValues()",
+"      .filter(r => r[di])",
+"      .map(r => { const o = {}; t.header.forEach((l, i) => { if (BY_LABEL[l]) o[BY_LABEL[l]] = r[i]; }); return o; });",
 "  }",
-"  return out_({ ok: true, entries: list, sheetUrl: SpreadsheetApp.getActiveSpreadsheet().getUrl() });",
+"  return out_({ ok: true, v: 2, entries: list, sheetUrl: SpreadsheetApp.getActiveSpreadsheet().getUrl() });",
 "}",
 "",
 "function doPost(e) {",
@@ -380,24 +494,26 @@ function scriptCode(key){return [
 "  const lock = LockService.getScriptLock();",
 "  lock.waitLock(10000);",
 "  try {",
-"    const sh = sheet_();",
-"    const row = FIELDS.map(f => {",
-"      let v = en[f];",
+"    const t = sheet_();",
+"    const row = t.header.map(l => {",
+"      const f = BY_LABEL[l];",
+"      let v = f ? en[f] : '';",
 "      if (v === undefined || v === null) return '';",
 "      if ((f === 'mood' || f === 'energy') && !v) return '';",
 "      if (typeof v === 'string' && /^[=+\\-@]/.test(v)) v = \"'\" + v;",
 "      return v;",
 "    });",
-"    const n = sh.getLastRow();",
+"    const di = t.header.indexOf('Fecha') + 1;",
+"    const n = t.sh.getLastRow();",
 "    let at = -1;",
 "    if (n > 1) {",
-"      const d = sh.getRange(2, 1, n - 1, 1).getDisplayValues();",
+"      const d = t.sh.getRange(2, di, n - 1, 1).getDisplayValues();",
 "      for (let i = 0; i < d.length; i++) if (d[i][0] === en.date) { at = i + 2; break; }",
 "    }",
-"    if (at > 0) sh.getRange(at, 1, 1, row.length).setValues([row]);",
-"    else sh.appendRow(row);",
-"    if (sh.getLastRow() > 2) sh.getRange(2, 1, sh.getLastRow() - 1, COLS.length).sort(1);",
-"    return out_({ ok: true });",
+"    if (at > 0) t.sh.getRange(at, 1, 1, row.length).setValues([row]);",
+"    else t.sh.appendRow(row);",
+"    if (t.sh.getLastRow() > 2) t.sh.getRange(2, 1, t.sh.getLastRow() - 1, t.header.length).sort(di);",
+"    return out_({ ok: true, v: 2 });",
 "  } finally {",
 "    lock.releaseLock();",
 "  }",
@@ -413,26 +529,32 @@ async function apiPost(c,entry){
   const r=await fetch(c.u,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({key:c.k,entry})});
   const j=await r.json(); if(!j.ok) throw new Error(j.error||"error"); return j;
 }
-function normalize(e){return {date:e.date,day:e.day||"",learned:e.learned||"",worked:e.worked||"",grateful:e.grateful||"",tomorrow:e.tomorrow||"",goal:e.goal||"",
-  clients:num(e.clients),sales:num(e.sales),mood:num(e.mood),energy:num(e.energy),updatedAt:e.updatedAt||""}}
+function normalize(e){const o={date:e.date,updatedAt:e.updatedAt||""};TEXT_FIELDS.forEach(f=>o[f]=e[f]||"");NUM_FIELDS.forEach(f=>o[f]=num(e[f]));return o}
+function markScript(v){const old=v!==2;if(cfg&&cfg.old!==old){cfg.old=old;LS.set("qy.cfg",cfg)}$("updatePanel").hidden=!old}
 async function pull(){
   if(!cfg)return;
   try{
     const j=await apiGet(cfg);
-    const fresh={};(j.entries||[]).forEach(e=>{if(/^\d{4}-\d{2}-\d{2}$/.test(e.date))fresh[e.date]=normalize(e)});
+    markScript(j.v);
+    const fresh={};
+    (j.entries||[]).forEach(e=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(e.date))return;const n=normalize(e);
+      // con el código viejo la hoja no guarda los campos nuevos: conserva los de este celular
+      if(j.v!==2&&entries[e.date])["effort","carry","feel","need","forme","followups"].forEach(f=>{if(entries[e.date][f])n[f]=entries[e.date][f]});
+      fresh[e.date]=n});
     queue.forEach(d=>{if(entries[d])fresh[d]=entries[d]});
+    if(j.v!==2)Object.keys(entries).forEach(d=>{if(!fresh[d])fresh[d]=entries[d]});
     entries=fresh; if(j.sheetUrl){cfg.s=j.sheetUrl;LS.set("qy.cfg",cfg)}
     persist(); if(!dirty)fillForm($("fDate").value||iso(new Date())); renderAll();
-    setNote(queue.length?`${queue.length} día(s) por subir a tu hoja.`:"");
+    setNote(cfg.old?"Actualiza el código de tu hoja para guardar todas las preguntas (en Ajustes).":queue.length?`${queue.length} día(s) por subir a tu hoja.`:"");
   }catch(e){setNote(navigator.onLine?"No se pudo leer tu hoja ahora. Tus días están guardados en este celular.":"Sin internet. Lo que guardes se subirá a tu hoja después.")}
 }
 async function push(){
   if(!cfg)return false;
   for(const d of [...queue]){
     if(!entries[d]){queue=queue.filter(x=>x!==d);continue}
-    try{await apiPost(cfg,entries[d]);queue=queue.filter(x=>x!==d);persist()}catch(e){setNote(`${queue.length} día(s) por subir a tu hoja.`);return false}
+    try{const j=await apiPost(cfg,entries[d]);markScript(j.v);queue=queue.filter(x=>x!==d);persist()}catch(e){setNote(`${queue.length} día(s) por subir a tu hoja.`);return false}
   }
-  setNote("");return true;
+  setNote(cfg.old?"Actualiza el código de tu hoja para guardar todas las preguntas (en Ajustes).":"");return true;
 }
 async function sync(){await push();await pull()}
 
@@ -441,7 +563,10 @@ async function sync(){await push();await pull()}
 
 /* ---------- formulario ---------- */
 function autosize(t){t.style.height="auto";t.style.height=t.scrollHeight+2+"px"}
-TEXTS.forEach(id=>$(id).addEventListener("input",e=>{autosize(e.target);dirty=true}));
+const autosizeAll=()=>requestAnimationFrame(()=>Object.keys(ALL_TEXT).forEach(id=>autosize($(id))));
+Object.keys(ALL_TEXT).forEach(id=>$(id).addEventListener("input",e=>{autosize(e.target);dirty=true}));
+const WORK=/\b(vend\w*|venta\w*|cliente\w*|dealer\w*|carro\w*|comisi\w*|lote|cita\w*|gross)\b/i;
+[["fFeel","nudgeFeel"],["fNeed","nudgeNeed"]].forEach(([f,n])=>$(f).addEventListener("input",()=>{$(n).hidden=!WORK.test($(f).value)}));
 function buildScale(el,get,set,name){
   for(let i=1;i<=5;i++){const b=document.createElement("button");b.type="button";b.textContent=i;b.dataset.v=i;b.setAttribute("aria-label",name+" "+i+" de 5");
     b.onclick=()=>{set(get()===i?0:i);paintScale(el,get());dirty=true};el.append(b)}
@@ -450,37 +575,55 @@ function paintScale(el,v){[...el.children].forEach(b=>b.setAttribute("aria-press
 buildScale($("mood"),()=>mood,v=>mood=v,"Ánimo");
 buildScale($("energy"),()=>energy,v=>energy=v,"Energía");
 document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>{const[id,s]=b.dataset.step.split(":");const el=$(id);el.value=Math.max(0,(+el.value||0)+ +s);dirty=true});
-["fClients","fSales"].forEach(id=>$(id).addEventListener("input",()=>dirty=true));
+Object.keys(NUMS).forEach(id=>$(id).addEventListener("input",()=>dirty=true));
+
+function step(s){
+  $("stepRole").hidden=s!=="role";$("stepYo").hidden=s!=="yo";
+  $("goRole").toggleAttribute("aria-current",s==="role");$("goYo").toggleAttribute("aria-current",s==="yo");
+  if(s==="role")$("goRole").setAttribute("aria-current","step");if(s==="yo")$("goYo").setAttribute("aria-current","step");
+  document.body.classList.toggle("yo",s==="yo");
+  autosizeAll();
+}
+$("goRole").onclick=()=>step("role");
+$("goYo").onclick=()=>step("yo");
+$("closeShift").onclick=()=>{step("yo");$("status").textContent="Turno cerrado. Ahora tú.";window.scrollTo({top:0,behavior:"smooth"})};
 
 function fillForm(date){
   const e=entries[date]||{};
   $("fDate").value=date;
   $("dateLine").textContent=date===iso(new Date())?longDate(date):"Editando: "+longDate(date);
-  $("fDay").value=e.day||"";$("fLearned").value=e.learned||"";$("fWorked").value=e.worked||"";
-  $("fGrateful").value=e.grateful||"";$("fTomorrow").value=e.tomorrow||"";$("fGoal").value=e.goal||"";
-  $("fClients").value=e.clients||0;$("fSales").value=e.sales||0;
+  Object.entries(ALL_TEXT).forEach(([id,f])=>$(id).value=e[f]||"");
+  // entradas viejas: "Mi día" pasa a "Cómo me siento" y "Qué probaré mañana" a la meta, solo si están vacíos
+  if(!e.feel&&e.day)$("fFeel").value=e.day;
+  if(!e.goal&&e.tomorrow)$("fGoal").value=e.tomorrow;
+  Object.entries(NUMS).forEach(([id,f])=>$(id).value=e[f]||0);
   mood=e.mood||0;energy=e.energy||0;
   paintScale($("mood"),mood);paintScale($("energy"),energy);
+  $("nudgeFeel").hidden=$("nudgeNeed").hidden=true;
   const prev=entries[shift(date,-1)];
   $("goalBanner").hidden=!(prev&&prev.goal);$("goalText").textContent=prev?.goal||"";
   $("save").textContent=entries[date]?"Actualizar mi día":"Guardar mi día";
-  requestAnimationFrame(()=>TEXTS.forEach(id=>autosize($(id))));
+  autosizeAll();
   dirty=false;
 }
-$("fDate").addEventListener("change",()=>{if($("fDate").value){fillForm($("fDate").value);$("status").textContent=""}});
+$("fDate").addEventListener("change",()=>{if($("fDate").value){fillForm($("fDate").value);step("role");$("status").textContent=""}});
 
 $("save").onclick=async()=>{
   const date=$("fDate").value||iso(new Date());
-  if(TEXTS.every(id=>!$(id).value.trim())){$("status").textContent="Escribe al menos una frase en alguna de las preguntas.";return}
-  entries[date]={date,day:$("fDay").value.trim(),learned:$("fLearned").value.trim(),worked:$("fWorked").value.trim(),
-    grateful:$("fGrateful").value.trim(),tomorrow:$("fTomorrow").value.trim(),goal:$("fGoal").value.trim(),
-    clients:Math.max(0,+$("fClients").value||0),sales:Math.max(0,+$("fSales").value||0),mood,energy,updatedAt:new Date().toISOString()};
+  if(Object.keys(ALL_TEXT).every(id=>!$(id).value.trim())){$("status").textContent="Escribe al menos una frase, de la vendedora o tuya.";return}
+  const prev=entries[date]||{};
+  const e={date,day:"",tomorrow:"",mood,energy,updatedAt:new Date().toISOString()};
+  Object.entries(ALL_TEXT).forEach(([id,f])=>e[f]=$(id).value.trim());
+  Object.entries(NUMS).forEach(([id,f])=>e[f]=Math.max(0,+$(id).value||0));
+  // si el texto viejo se movió a los campos nuevos, no lo dupliques
+  if(prev.day&&e.feel!==prev.day)e.day=prev.day; if(prev.tomorrow&&e.goal!==prev.tomorrow)e.tomorrow=prev.tomorrow;
+  entries[date]=e;
   if(!queue.includes(date))queue.push(date);
   persist();dirty=false;renderAll();$("save").textContent="Actualizar mi día";
   $("save").disabled=true;$("status").textContent="Guardando…";
   const ok=await push();
   $("save").disabled=false;
-  $("status").textContent=ok?"Guardado en tu hoja. Bien hecho por darte este momento.":"Guardado en este celular. Se subirá a tu hoja cuando haya conexión.";
+  $("status").textContent=ok?"Guardado. La vendedora cerró su turno y tú te diste este momento.":"Guardado en este celular. Se subirá a tu hoja cuando haya conexión.";
 };
 
 /* ---------- racha ---------- */
@@ -488,13 +631,26 @@ function streak(){let d=iso(new Date());if(!entries[d])d=shift(d,-1);let n=0;whi
 
 /* ---------- mes ---------- */
 function monthEntries(){const p=`${view.getFullYear()}-${pad(view.getMonth()+1)}`;return Object.values(entries).filter(e=>e.date.startsWith(p)).sort((a,b)=>a.date<b.date?-1:1)}
+function moodVsSales(list){
+  const withS=list.filter(e=>e.mood>0&&e.sales>0).map(e=>e.mood), without=list.filter(e=>e.mood>0&&!e.sales).map(e=>e.mood);
+  const a=mean(withS), b=mean(without);
+  let verdict;
+  if(withS.length<2||without.length<2)verdict="Necesito al menos 2 días con venta y 2 sin venta (con ánimo marcado) para comparar.";
+  else{const d=a-b;
+    verdict=d>=1?"Tu ánimo cae bastante cuando no vendes. El rol se está llevando parte de ti; sigue cerrando el turno.":
+      d>=0.5?"Tu ánimo se mueve un poco con las ventas. Hay espacio, pero todavía se toca.":
+      "Tu ánimo se sostiene aunque no vendas. Hay espacio entre la vendedora y tú."}
+  return {a,b,verdict,nA:withS.length,nB:without.length};
+}
 function renderMonth(){
   $("monthTitle").textContent=view.toLocaleDateString("es",{month:"long",year:"numeric"});
   const list=monthEntries();
   $("sDays").textContent=list.length;
   $("sSales").textContent=list.reduce((a,e)=>a+(e.sales||0),0);
-  $("sClients").textContent=list.reduce((a,e)=>a+(e.clients||0),0);
-  $("sMood").textContent=avg(list,"mood");
+  $("sFollow").textContent=list.reduce((a,e)=>a+(e.followups||0),0);
+  const m=mean(list.map(e=>e.mood).filter(x=>x>0));$("sMood").textContent=m==null?"–":m.toFixed(1);
+  const mv=moodVsSales(list);
+  $("moodSale").textContent=mv.a==null?"–":mv.a.toFixed(1);$("moodNoSale").textContent=mv.b==null?"–":mv.b.toFixed(1);$("verdict").textContent=mv.verdict;
   const cal=$("cal");cal.innerHTML="";
   ["L","M","M","J","V","S","D"].forEach(d=>{const s=document.createElement("div");s.className="dow";s.textContent=d;cal.append(s)});
   const first=(view.getDay()+6)%7, days=new Date(view.getFullYear(),view.getMonth()+1,0).getDate(), today=iso(new Date());
@@ -510,14 +666,19 @@ function renderMonth(){
   const box=$("entries");
   if(!list.length){box.innerHTML=`<div class="glass empty"><strong>Este mes todavía está en blanco</strong>Escribe tu primera entrada en “Hoy”. Aquí verás cada día que guardes.</div>`;return}
   const p=(k,label,e)=>e[k]?`<p><span class="k">${label}</span>${esc(e[k])}</p>`:"";
-  box.innerHTML=list.slice().reverse().map(e=>`<button type="button" class="glass entry" data-date="${e.date}">
+  box.innerHTML=list.slice().reverse().map(e=>{
+    const role=p("effort","Lo que hizo",e)+p("worked","Funcionó / no",e)+p("learned","Aprendió",e)+p("goal","Mañana va a",e)+p("tomorrow","Mañana prueba",e)+p("carry","Se llevaba a casa",e);
+    const yo=p("feel","Cómo me sentí",e)+p("day","Mi día",e)+p("need","Qué necesitaba",e)+p("forme","Hice por mí",e)+p("grateful","Agradezco",e);
+    return `<button type="button" class="glass entry" data-date="${e.date}">
     <h3>${esc(longDate(e.date))}</h3>
-    ${p("day","Mi día",e)}${p("learned","Aprendí",e)}${p("worked","Funcionó / no funcionó",e)}${p("grateful","Agradezco",e)}${p("tomorrow","Mañana pruebo",e)}${p("goal","Meta para mañana",e)}
-    <span class="meta"><span>${e.clients||0} clientes</span><span>${e.sales||0} ventas</span>${e.mood?`<span>ánimo ${e.mood}/5</span>`:""}${e.energy?`<span>energía ${e.energy}/5</span>`:""}</span>
-  </button>`).join("");
+    <span class="meta"><span>${e.clients||0} clientes</span><span>${e.followups||0} seguimientos</span><span>${e.sales||0} ventas</span></span>
+    ${role?`<h4 class="r">La vendedora</h4>${role}`:""}
+    ${yo?`<h4 class="y">Yo</h4>${yo}`:""}
+    <span class="meta">${e.mood?`<span>ánimo ${e.mood}/5</span>`:""}${e.energy?`<span>energía ${e.energy}/5</span>`:""}</span>
+  </button>`}).join("");
   box.querySelectorAll(".entry").forEach(a=>a.onclick=()=>openDay(a.dataset.date));
 }
-function openDay(key){show("hoy");fillForm(key);$("status").textContent="";window.scrollTo({top:0,behavior:"smooth"})}
+function openDay(key){show("hoy");fillForm(key);step("role");$("status").textContent="";window.scrollTo({top:0,behavior:"smooth"})}
 $("prevM").onclick=()=>{view.setMonth(view.getMonth()-1);$("balanceStatus").textContent="";renderMonth()};
 $("nextM").onclick=()=>{view.setMonth(view.getMonth()+1);$("balanceStatus").textContent="";renderMonth()};
 function renderAll(){const s=streak();$("streak").textContent=s===1?"1 día":`${s} días`;renderMonth()}
@@ -528,32 +689,35 @@ $("copyMonth").onclick=async()=>{
   if(!list.length){out.textContent="Este mes no tiene entradas todavía.";return}
   const mes=view.toLocaleDateString("es",{month:"long",year:"numeric"});
   const v=x=>x==null||x===""||x===0?"-":x;
-  const data=list.map(e=>`${e.date} | mi día: ${v(e.day)} | aprendí: ${v(e.learned)} | funcionó/no: ${v(e.worked)} | agradezco: ${v(e.grateful)} | mañana pruebo: ${v(e.tomorrow)} | meta para mañana: ${v(e.goal)} | clientes ${e.clients||0}, ventas ${e.sales||0} | ánimo ${v(e.mood)}/5, energía ${v(e.energy)}/5`).join("\n");
-  const prompt=`Hazme el balance de mi mes (${mes}). Soy Camila, vendedora en un dealership de carros. Háblame en español, tono cálido, tranquilo y concreto, sin exagerar.
+  const mv=moodVsSales(list);
+  const data=list.map(e=>`${e.date}
+  VENDEDORA: clientes ${e.clients||0}, seguimientos ${e.followups||0}, ventas ${e.sales||0} | lo que hizo: ${v(e.effort)} | funcionó/no: ${v(e.worked)} | aprendió: ${v(e.learned)} | mañana va a: ${v(e.goal||e.tomorrow)} | se llevaba a casa: ${v(e.carry)}
+  YO: cómo me sentí: ${v(e.feel||e.day)} | qué necesitaba: ${v(e.need)} | hice por mí: ${v(e.forme)} | agradezco: ${v(e.grateful)} | ánimo ${v(e.mood)}/5, energía ${v(e.energy)}/5`).join("\n");
+  const prompt=`Hazme el balance de mi mes (${mes}). Soy Camila, vendedora en un dealership de carros. Mi psicóloga me pidió separar mi yo del rol de vendedora, así que mi diario tiene dos espacios: "la vendedora" y "yo". Háblame en español, tono cálido, directo y concreto, sin exagerar.
 
 Estructura:
-1. Cómo fue mi mes: 2-3 frases con los números (días escritos, ventas, clientes, ánimo, energía).
-2. Patrones que ves: qué se repite y qué acciones o días coinciden con más ventas o mejor ánimo. Si hay pocos datos, dilo.
-3. Lo que agradecí.
-4. Mis metas: cuántas me puse y si hay evidencia de que las cumplí.
-5. Mis reglas: 2-4 reglas cortas sacadas de lo que aprendí.
-6. Para el próximo mes: 1-2 focos concretos.
+1. Cómo le fue a la vendedora: números (clientes, seguimientos, ventas) y, sobre todo, su esfuerzo: lo que hizo aunque no vendiera.
+2. Lo que funcionó y sus reglas: 2-4 reglas cortas sacadas de lo que aprendió.
+3. Cómo estuve yo: lo que sentí, lo que necesité y lo que hice por mí. Qué se repite.
+4. ¿El rol se está llevando mi ánimo? Ánimo promedio en días con venta: ${mv.a==null?"sin datos":mv.a.toFixed(1)} (${mv.nA} días) y sin venta: ${mv.b==null?"sin datos":mv.b.toFixed(1)} (${mv.nB} días). Dime qué ves, y si en "yo" se cuela el trabajo.
+5. Lo que me llevé a casa: qué se repite en esa pregunta.
+6. Para el próximo mes: un foco para la vendedora y uno para mí.
 
-No inventes datos. Mis entradas:
+No inventes datos; si hay pocos, dilo. Mis entradas:
 ${data}`;
   out.textContent=(await copyText(prompt))?"Copiado. Abre Claude y pégalo en un chat nuevo.":"No se pudo copiar. Intenta otra vez.";
 };
 
 /* ---------- vistas ---------- */
 function show(v){
-  current=v;
   ["hoy","mes","ajustes","setup"].forEach(n=>$("view-"+n).hidden=n!==v);
   $("tabs").hidden=v==="setup"||v==="ajustes";
   $("openSettings").hidden=v==="setup"||v==="ajustes";
   $("tab-hoy").setAttribute("aria-selected",v==="hoy");$("tab-mes").setAttribute("aria-selected",v==="mes");
-  if(v==="hoy")requestAnimationFrame(()=>TEXTS.forEach(id=>autosize($(id))));
+  document.body.classList.toggle("yo",v==="hoy"&&!$("stepYo").hidden);
+  if(v==="hoy")autosizeAll();
   if(v==="mes")renderMonth();
-  if(v==="ajustes")$("connInfo").textContent=cfg?"Conectada a tu hoja de Google.":"Sin conexión configurada.";
+  if(v==="ajustes"){$("connInfo").textContent=cfg?"Conectada a tu hoja de Google.":"Sin conexión configurada.";$("updatePanel").hidden=!(cfg&&cfg.old);if(cfg)$("codeBox2").value=scriptCode(cfg.k)}
 }
 $("tab-hoy").onclick=()=>show("hoy");
 $("tab-mes").onclick=()=>show("mes");
@@ -565,19 +729,21 @@ function newKey(){const a=new Uint8Array(12);crypto.getRandomValues(a);return [.
 let pendingKey=LS.get("qy.pendingKey",null); if(!pendingKey){pendingKey=newKey();LS.set("qy.pendingKey",pendingKey)}
 $("codeBox").value=scriptCode(pendingKey);
 $("copyCode").onclick=async()=>{const ok=await copyText($("codeBox").value);$("setupStatus").textContent=ok?"Código copiado.":"Selecciona el código y cópialo a mano."};
+$("copyCode2").onclick=async()=>{const ok=await copyText($("codeBox2").value);$("settingsStatus").textContent=ok?"Código copiado.":"Selecciona el código y cópialo a mano."};
 const connCode=c=>"QY1:"+btoa(JSON.stringify({u:c.u,k:c.k}));
 function parseConn(s){try{s=s.trim();if(!s.startsWith("QY1:"))return null;const o=JSON.parse(atob(s.slice(4)));return o.u&&o.k?{u:o.u,k:o.k}:null}catch(e){return null}}
 async function connect(c,statusEl){
   if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(c.u)){statusEl.textContent="Esa URL no parece de Apps Script. Debe empezar con https://script.google.com/";return}
   statusEl.textContent="Conectando…";
-  try{const j=await apiGet(c);cfg={u:c.u,k:c.k,s:j.sheetUrl||""};LS.set("qy.cfg",cfg);statusEl.textContent="";
+  try{const j=await apiGet(c);cfg={u:c.u,k:c.k,s:j.sheetUrl||"",old:j.v!==2};LS.set("qy.cfg",cfg);statusEl.textContent="";
     await sync();show("hoy");$("status").textContent="Listo, tu diario está conectado a tu hoja.";}
   catch(e){statusEl.textContent=e.message==="clave"?"La clave no coincide. Copia otra vez el código de arriba en Apps Script y vuelve a implementar.":"No se pudo conectar. Revisa que elegiste “Cualquier usuario” y que la URL termina en /exec."}
 }
 $("connectBtn").onclick=()=>connect({u:$("urlInput").value.trim(),k:pendingKey},$("setupStatus"));
 $("useCodeBtn").onclick=()=>{const c=parseConn($("codeInput").value);if(!c){$("codeStatus").textContent="Ese código no es válido. Debe empezar con QY1:";return}connect(c,$("codeStatus"))};
 $("copyConn").onclick=async()=>{if(!cfg)return;$("settingsStatus").textContent=(await copyText(connCode(cfg)))?"Código copiado. Pégalo en tu otro dispositivo.":"No se pudo copiar."};
-$("syncNow").onclick=async()=>{$("settingsStatus").textContent="Sincronizando…";await sync();$("settingsStatus").textContent=queue.length?"Algunos días siguen pendientes de subir.":"Todo al día con tu hoja."};
+$("syncNow").onclick=async()=>{$("settingsStatus").textContent="Sincronizando…";if(cfg&&cfg.old)queue=[...new Set([...queue,...Object.keys(entries)])];persist();await sync();
+  $("settingsStatus").textContent=cfg&&cfg.old?"Tu hoja todavía tiene el código viejo.":queue.length?"Algunos días siguen pendientes de subir.":"Todo al día con tu hoja.";$("updatePanel").hidden=!(cfg&&cfg.old)};
 let confirmDisc=false;
 $("disconnect").onclick=()=>{
   if(!confirmDisc){confirmDisc=true;$("disconnect").textContent="Toca otra vez para confirmar";$("settingsStatus").textContent=queue.length?"Ojo: tienes días sin subir; se perderán en este dispositivo.":"Tus días siguen en tu hoja de Google.";return}
@@ -589,7 +755,7 @@ $("disconnect").onclick=()=>{
 (()=>{const m=location.hash.match(/^#c=(.+)$/);if(!m)return;const c=parseConn(decodeURIComponent(m[1]));history.replaceState(null,"",location.pathname);if(c&&!cfg)connect(c,$("codeStatus"))})();
 
 /* ---------- arranque ---------- */
-fillForm(iso(new Date()));renderAll();
+fillForm(iso(new Date()));renderAll();step("role");
 show(cfg?"hoy":"setup");
 if(cfg)sync();
 window.addEventListener("online",()=>{if(cfg)sync()});
