@@ -1,6 +1,6 @@
 // Querida yo: guarda la app en el celular para que abra rápido y sin internet.
 // Las llamadas a Google (tu hoja) nunca se guardan en caché.
-const CACHE = "querida-yo-v1";
+const CACHE = "querida-yo-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
